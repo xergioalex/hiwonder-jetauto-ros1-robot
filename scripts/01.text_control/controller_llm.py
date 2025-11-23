@@ -24,6 +24,14 @@ def signal_handler(sig, frame):
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 load_dotenv(os.path.join(repo_root, '.env'))
 
+def safe_print(message):
+    """Print message safely, handling Unicode encoding errors"""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        # Fallback: remove non-ASCII characters
+        print(message.encode('ascii', 'ignore').decode('ascii'))
+
 def load_system_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r", encoding='utf-8') as f:
         return f.read()
@@ -144,7 +152,7 @@ def execute_sequence(commands):
     system_prompt = load_system_prompt()
 
     for cmd in commands:
-        print("Executing: {}".format(cmd))
+        safe_print("Executing: {}".format(cmd))
         twist_data = ask_llm_for_twist(cmd, system_prompt)
 
         # Extract metadata
@@ -213,9 +221,9 @@ if __name__ == "__main__":
                 continue
 
             # Process command
-            print("\nProcessing: {}".format(user_input))
+            safe_print("\nProcessing: {}".format(user_input))
             steps = split_into_steps(user_input)
-            print("Steps: {}".format(steps))
+            safe_print("Steps: {}".format(steps))
 
             # Execute sequence
             try:
