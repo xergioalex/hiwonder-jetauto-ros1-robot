@@ -17,7 +17,12 @@ def load_system_prompt():
 def ask_llm_for_twist(command, system_prompt):
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
+        print("Error: OPENAI_API_KEY not found in environment variables")
         return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+    
+    # Check API key format
+    if not api_key.startswith('sk-'):
+        print("Warning: API key doesn't start with 'sk-', might be invalid")
     
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
@@ -34,6 +39,28 @@ def ask_llm_for_twist(command, system_prompt):
     
     try:
         response = requests.post(url, headers=headers, json=data, timeout=30)
+        
+        # Check for authentication errors
+        if response.status_code == 401:
+            print("Error: Authentication failed - Invalid API key")
+            try:
+                error_data = response.json()
+                print("Error details: {}".format(error_data))
+            except:
+                print("Error response: {}".format(response.text))
+            return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+        elif response.status_code == 403:
+            print("Error: Access forbidden - API key may not have permission")
+            try:
+                error_data = response.json()
+                print("Error details: {}".format(error_data))
+            except:
+                print("Error response: {}".format(response.text))
+            return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+        elif response.status_code == 429:
+            print("Error: Rate limit exceeded - Too many requests")
+            return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+        
         response.raise_for_status()
         result = response.json()
         
@@ -45,6 +72,13 @@ def ask_llm_for_twist(command, system_prompt):
         return json.loads(content)
     except requests.exceptions.RequestException as e:
         print("Error making API request: {}".format(e))
+        if hasattr(e, 'response') and e.response is not None:
+            print("Response status code: {}".format(e.response.status_code))
+            try:
+                error_data = e.response.json()
+                print("Error response: {}".format(error_data))
+            except:
+                print("Error response text: {}".format(e.response.text))
         return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
     except (KeyError, ValueError) as e:
         print("Error parsing API response: {}".format(e))
