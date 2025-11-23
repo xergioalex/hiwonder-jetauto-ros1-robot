@@ -98,7 +98,12 @@ def split_into_steps(text):
             # If no numbered steps found, treat the whole command as a single step
             print("Warning: No numbered steps found, using command as single step")
             steps = [text]
-        
+
+        # ALWAYS add a stop command at the end for safety
+        if steps and steps[-1].lower() not in ['stop', 'para', 'alto', 'detente', 'halt', 'freeze']:
+            steps.append('stop')
+            print("Debug: Added automatic 'stop' command at the end")
+
         return steps
     except requests.exceptions.RequestException as e:
         print("Error making API request: {}".format(e))

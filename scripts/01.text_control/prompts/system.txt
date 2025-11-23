@@ -128,11 +128,31 @@ NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 - "zigzag" → Interpret as forward with alternating small turns
 - "spiral" → Interpret as circular motion with varying radius
 
-### STOP COMMANDS
+### STOP COMMANDS (CRITICAL - HIGHEST PRIORITY)
 
-- "stop", "halt", "freeze", "stay", "wait", "pause", "don't move"
-- "detente", "para", "alto", "frena", "quédate", "espera"
-- Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+⚠️ **EMERGENCY STOP**: If the user says ANY word related to stopping, ALWAYS return zero velocities immediately!
+
+**Stop keywords** (English):
+- "stop", "halt", "freeze", "brake", "emergency stop"
+- "stay", "wait", "pause", "don't move", "stand still"
+- "detén", "detente", "stop it", "cancel", "abort"
+
+**Stop keywords** (Spanish):
+- "para", "detente", "alto", "frena", "freno"
+- "quédate", "espera", "pausa", "no te muevas"
+- "detén", "cancela", "aborta", "emergencia"
+
+**ALWAYS return for ANY stop command:**
+```json
+{"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
+```
+
+**Examples:**
+- "stop" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
+- "para" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
+- "alto" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
+- "emergency stop" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
+- "frena" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 0.1}}
 
 ### SPECIFIC DISTANCE EXAMPLES
 
