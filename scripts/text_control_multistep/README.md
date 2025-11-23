@@ -18,7 +18,16 @@ The system supports commands in **English and Spanish**, and is designed for rob
 
 ## Installation
 
-### 1. Install Python Dependencies
+### 1. Install System Dependencies (for TTS)
+
+On Ubuntu/Debian:
+
+```bash
+sudo apt-get update
+sudo apt-get install espeak espeak-data libespeak-dev
+```
+
+### 2. Install Python Dependencies
 
 ```bash
 cd scripts/text_control_multistep
@@ -28,10 +37,10 @@ pip install -r requirements.txt
 Or install manually:
 
 ```bash
-pip install openai python-dotenv
+pip install requests python-dotenv pyttsx3
 ```
 
-### 2. Configure OpenAI API Key
+### 3. Configure OpenAI API Key
 
 Create a `.env` file in the `text_control_multistep/` directory with your API key:
 
@@ -41,7 +50,7 @@ OPENAI_API_KEY=your_api_key_here
 
 **Important**: The `.env` file is in `.gitignore` and will not be uploaded to the repository. Make sure to create this file locally.
 
-### 3. Verify ROS is Configured
+### 4. Verify ROS is Configured
 
 Make sure you have ROS configured in your environment:
 
@@ -84,18 +93,28 @@ Enter a multi-step command (English or Spanish): Avanza un metro, luego gira a l
 - "Go forward slowly, then turn right and go back"
 - "Rotate 180 degrees, then move forward 1 meter"
 
+## Features
+
+- ✅ **Multi-step command parsing**: Automatically breaks down complex instructions
+- ✅ **Bilingual support**: Works with English and Spanish commands
+- ✅ **Voice announcements**: Robot announces each command before executing (TTS)
+- ✅ **Precise timing**: Calculates execution time based on distances and angles
+- ✅ **Smart velocity scaling**: Adjusts speed based on command modifiers (slow/fast)
+
 ## How It Works
 
-1. **Parser (`parser_llm.py`)**: 
+1. **Parser (`parser_llm.py`)**:
    - Receives the complete command from the user
    - Uses OpenAI to split it into individual steps
    - Returns a list of simple commands
 
 2. **Controller (`controller_llm.py`)**:
    - Takes each step from the list
-   - Uses OpenAI to convert each command into a ROS `Twist` message
+   - **Announces the command via TTS** (Text-to-Speech)
+   - Uses OpenAI to convert each command into a ROS `Twist` message with metadata
    - Publishes the command to `/cmd_vel`
-   - Waits 2 seconds and stops the robot before the next step
+   - Executes for the calculated duration based on distance/angle
+   - Stops the robot before the next step
 
 ## File Structure
 
@@ -138,6 +157,12 @@ In `controller_llm.py`:
 ### Error: "No module named 'rospy'"
 - Make sure you have ROS installed and configured
 - Run `source /opt/ros/[version]/setup.bash` before running the script
+
+### TTS not working (no voice)
+- Install espeak: `sudo apt-get install espeak espeak-data libespeak-dev`
+- Check if espeak works: `espeak "test"`
+- Install pyttsx3: `pip install pyttsx3`
+- If errors persist, the script will continue without TTS (commands will only be printed)
 
 ### Robot doesn't move
 - Verify that the `/cmd_vel` topic is being listened to by the robot

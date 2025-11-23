@@ -6,9 +6,50 @@ import time
 import os
 from dotenv import load_dotenv
 from parser_llm import split_into_steps
+import pyttsx3
+import threading
 
 # Load environment variables from .env file
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+# Initialize TTS engine (global to avoid reinitializing on each call)
+tts_engine = None
+tts_lock = threading.Lock()
+
+def init_tts():
+    """Initialize the TTS engine with proper settings"""
+    global tts_engine
+    if tts_engine is None:
+        try:
+            tts_engine = pyttsx3.init()
+            # Set properties
+            tts_engine.setProperty('rate', 150)  # Speed of speech
+            tts_engine.setProperty('volume', 0.9)  # Volume (0.0 to 1.0)
+            print("TTS engine initialized successfully")
+        except Exception as e:
+            print("Warning: Could not initialize TTS engine: {}".format(e))
+            print("Commands will be printed but not spoken")
+            tts_engine = None
+    return tts_engine
+
+def speak(text):
+    """Speak the given text using TTS (non-blocking)"""
+    def _speak():
+        with tts_lock:
+            engine = init_tts()
+            if engine is not None:
+                try:
+                    engine.say(text)
+                    engine.runAndWait()
+                except Exception as e:
+                    print("TTS Error: {}".format(e))
+
+    # Run TTS in a separate thread to avoid blocking
+    thread = threading.Thread(target=_speak)
+    thread.daemon = True
+    thread.start()
+    # Give it a moment to start speaking
+    time.sleep(0.3)
 
 def load_system_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r", encoding='utf-8') as f:
@@ -131,6 +172,10 @@ def execute_sequence(commands):
 
     for cmd in commands:
         print("Executing: {}".format(cmd))
+
+        # Announce the command via TTS
+        speak(cmd)
+
         twist_data = ask_llm_for_twist(cmd, system_prompt)
 
         # Extract metadata
