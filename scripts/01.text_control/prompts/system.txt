@@ -116,17 +116,50 @@ NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 - "gira derecha", "voltea a la derecha", "rota a la derecha"
 - Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
 
-### COMPOUND MOVEMENTS
+### COMPOUND MOVEMENTS (SIMULTANEOUS LINEAR + ANGULAR)
 
-**Moving while turning**:
-- "go forward and turn left" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.4}}
-- "avanza girando a la derecha" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.4}}
-- "curve to the left while moving" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}}
+⚠️ **CRITICAL**: When the user wants to move forward/backward AND turn at the same time, you MUST set BOTH linear.x AND angular.z to non-zero values simultaneously.
 
-**Navigation patterns**:
-- "circle around", "orbit", "go in circles" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
-- "zigzag" → Interpret as forward with alternating small turns
-- "spiral" → Interpret as circular motion with varying radius
+**Moving while turning (curved paths)**:
+- "go forward and turn left" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.4}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+- "avanza girando a la derecha" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.4}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+- "curve to the left while moving" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 4.0}}
+- "move forward curving right" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 4.0}}
+
+**Diagonal/arc movements**:
+- "avanza en diagonal a la izquierda" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.5}}
+- "avanza en diagonal a la derecha" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.5}}
+- "move diagonally left" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.35}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.5}}
+- "move diagonally right" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.35}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.5}}
+
+**Circular and curved navigation patterns**:
+- "circle around" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 12.6}}
+- "haz un círculo" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 12.6}}
+- "da una vuelta en círculo" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 12.6}}
+- "orbit" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.4}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 15.7}}
+- "go in circles" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 6.0}}
+
+**Arc movements (partial circles)**:
+- "make a wide left turn" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.2}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 4.0}}
+- "haz un giro amplio a la derecha" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.2}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 4.0}}
+- "make a tight left curve" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.6}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+- "curva cerrada a la derecha" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.6}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+
+**Complex patterns**:
+- "zigzag" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 4.0}}
+- "spiral" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.4}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 8.0}}
+- "serpentine" → {"linear": {"x": 0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.25}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 5.0}}
+
+**Backward compound movements**:
+- "retrocede girando a la izquierda" → {"linear": {"x": -0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+- "go back while turning right" → {"linear": {"x": -0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.3}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 3.0}}
+
+**Velocity balancing guidelines for compound movements**:
+- **Wide curves** (gentle arcs): linear.x = 0.4-0.5, angular.z = ±0.2 to ±0.3
+- **Medium curves**: linear.x = 0.3-0.4, angular.z = ±0.3 to ±0.4
+- **Tight curves**: linear.x = 0.2-0.3, angular.z = ±0.5 to ±0.6
+- **Circles**: linear.x = 0.2-0.3, angular.z = ±0.4 to ±0.5 (balanced for circular motion)
+- **Rule of thumb**: Total velocity magnitude should not exceed ~0.7 (sqrt(linear.x² + angular.z²) ≤ 0.7)
 
 ### STOP COMMANDS (CRITICAL - HIGHEST PRIORITY)
 

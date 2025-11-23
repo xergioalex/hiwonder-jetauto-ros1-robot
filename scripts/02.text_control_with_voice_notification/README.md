@@ -74,15 +74,49 @@ roscore
 2. In another terminal, run the script:
 
 ```bash
-cd scripts/text_control_multistep
+cd scripts/02.text_control_with_voice_notification
 python controller_llm.py
 ```
 
-3. Enter a multi-step command when prompted:
+3. The script will run in **continuous mode** - you can enter multiple commands:
 
 ```
-Enter a multi-step command (English or Spanish): Avanza un metro, luego gira a la derecha y después avanza otro medio metro
+======================================================================
+🤖 Robot Text Controller with Voice Notifications - Continuous Mode
+======================================================================
+Enter commands in English or Spanish
+The robot will announce each action before executing
+
+Type 'exit', 'quit', or 'salir' to stop
+Press Ctrl+C to force exit
+======================================================================
+
+🎤 Enter command: Avanza un metro, luego gira a la derecha
+
+📝 Processing: Avanza un metro, luego gira a la derecha
+📋 Steps: ['Avanza un metro', 'Gira a la derecha', 'stop']
+Executing: Avanza un metro
+[Robot speaks: "Avanza un metro"]
+...
+✅ Sequence completed!
+----------------------------------------------------------------------
+
+🎤 Enter command: Gira 180 grados
+
+📝 Processing: Gira 180 grados
+[Robot speaks: "Gira 180 grados"]
+...
+✅ Sequence completed!
+----------------------------------------------------------------------
+
+🎤 Enter command: exit
+👋 Exiting robot controller...
+[Robot speaks: "Adiós"]
 ```
+
+**To exit:**
+- Type: `exit`, `quit`, `salir`, `terminar`, or `cerrar`
+- Press: `Ctrl+C`
 
 ### Command Examples
 
@@ -174,6 +208,8 @@ In `controller_llm.py`:
 
 ## Notes
 
-- The script publishes velocity commands, not position commands. The robot must have a controller that interprets these commands.
-- Each command executes for 2 seconds and then the robot stops before the next step.
-- The system is designed for robots with mecanum wheels in 2D (only uses `linear.x` and `angular.z`).
+- The script runs in **continuous mode** - you can enter multiple commands without restarting
+- The script publishes velocity commands with calculated durations based on distance/angle
+- Each command executes for the calculated duration, then the robot stops before the next step
+- The system is designed for robots with mecanum wheels in 2D (only uses `linear.x` and `angular.z`)
+- **Voice announcements**: The robot speaks each command before executing it

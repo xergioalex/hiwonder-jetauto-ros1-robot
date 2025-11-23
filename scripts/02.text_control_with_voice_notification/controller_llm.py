@@ -214,7 +214,49 @@ def execute_sequence(commands):
         # time.sleep(0.1)  # Optional pause between commands (commented for instant transitions)
 
 if __name__ == "__main__":
-    user_input = input("Enter a multi-step command (English or Spanish): ")
-    steps = split_into_steps(user_input)
-    print("Steps: {}".format(steps))
-    execute_sequence(steps)
+    print("=" * 70)
+    print("🤖 Robot Text Controller with Voice Notifications - Continuous Mode")
+    print("=" * 70)
+    print("Enter commands in English or Spanish")
+    print("The robot will announce each action before executing")
+    print("")
+    print("Type 'exit', 'quit', or 'salir' to stop")
+    print("Press Ctrl+C to force exit")
+    print("=" * 70)
+    print("")
+
+    try:
+        while True:
+            # Get user input
+            user_input = input("🎤 Enter command: ").strip()
+
+            # Check for exit commands
+            if user_input.lower() in ['exit', 'quit', 'salir', 'terminar', 'cerrar']:
+                print("\n👋 Exiting robot controller...")
+                speak("Adiós")
+                break
+
+            # Skip empty input
+            if not user_input:
+                continue
+
+            # Process command
+            print("\n📝 Processing: {}".format(user_input))
+            steps = split_into_steps(user_input)
+            print("📋 Steps: {}".format(steps))
+
+            # Execute sequence
+            execute_sequence(steps)
+
+            print("\n✅ Sequence completed!")
+            print("-" * 70)
+            print("")
+
+    except KeyboardInterrupt:
+        print("\n\n🛑 Ctrl+C detected - Stopping controller...")
+        speak("Deteniendo")
+        print("Goodbye! 👋")
+    except Exception as e:
+        print("\n❌ Error: {}".format(e))
+        import traceback
+        traceback.print_exc()

@@ -65,15 +65,42 @@ roscore
 2. In another terminal, run the script:
 
 ```bash
-cd scripts/text_control_multistep
+cd scripts/01.text_control
 python controller_llm.py
 ```
 
-3. Enter a multi-step command when prompted:
+3. The script will run in **continuous mode** - you can enter multiple commands:
 
 ```
-Enter a multi-step command (English or Spanish): Avanza un metro, luego gira a la derecha y después avanza otro medio metro
+======================================================================
+🤖 Robot Text Controller - Continuous Mode
+======================================================================
+Enter commands in English or Spanish
+Type 'exit', 'quit', or 'salir' to stop
+Press Ctrl+C to force exit
+======================================================================
+
+Enter command: Avanza un metro, luego gira a la derecha
+📝 Processing: Avanza un metro, luego gira a la derecha
+📋 Steps: ['Avanza un metro', 'Gira a la derecha', 'stop']
+Executing: Avanza un metro
+...
+✅ Sequence completed!
+----------------------------------------------------------------------
+
+Enter command: Gira 180 grados
+📝 Processing: Gira 180 grados
+...
+✅ Sequence completed!
+----------------------------------------------------------------------
+
+Enter command: exit
+👋 Exiting robot controller...
 ```
+
+**To exit:**
+- Type: `exit`, `quit`, `salir`, `terminar`, or `cerrar`
+- Press: `Ctrl+C`
 
 ### Command Examples
 
