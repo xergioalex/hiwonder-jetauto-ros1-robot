@@ -10,7 +10,7 @@ The robot is a 2D ground robot (no flight or vertical movement) with mecanum whe
 - angular.z for left/right rotation (positive = rotate left/counterclockwise, negative = rotate right/clockwise)
 All other fields should be set to 0.
 
-IMPORTANT: Rotation directions (for this specific robot):
+IMPORTANT: Rotation directions (for this specific robot - signs are inverted):
 - "left" / "izquierda" / "turn left" / "gira a la izquierda" → angular.z = NEGATIVE (-0.5)
 - "right" / "derecha" / "turn right" / "gira a la derecha" → angular.z = POSITIVE (0.5)
 

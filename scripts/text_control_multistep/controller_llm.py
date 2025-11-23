@@ -100,6 +100,7 @@ def execute_sequence(commands):
     for cmd in commands:
         print("Executing: {}".format(cmd))
         twist_data = ask_llm_for_twist(cmd, system_prompt)
+        print("Debug: Generated Twist - linear.x: {}, angular.z: {}".format(twist_data['linear']['x'], twist_data['angular']['z']))
         twist = Twist()
         twist.linear.x = twist_data['linear']['x']
         twist.linear.y = twist_data['linear']['y']
