@@ -8,8 +8,17 @@ import signal
 import sys
 from dotenv import load_dotenv
 from parser_llm import split_into_steps
-import pyttsx3
 import threading
+
+# Try to import pyttsx3, but make it optional
+try:
+    import pyttsx3
+    TTS_AVAILABLE = True
+except (ImportError, SyntaxError) as e:
+    print("Warning: pyttsx3 not available ({}). Voice notifications will be disabled.".format(e))
+    print("Commands will still work, but without voice announcements.")
+    TTS_AVAILABLE = False
+    pyttsx3 = None
 
 # Global flag for clean exit
 should_exit = False
@@ -42,6 +51,8 @@ tts_lock = threading.Lock()
 def init_tts():
     """Initialize the TTS engine with proper settings"""
     global tts_engine
+    if not TTS_AVAILABLE or pyttsx3 is None:
+        return None
     if tts_engine is None:
         try:
             tts_engine = pyttsx3.init()
@@ -57,6 +68,9 @@ def init_tts():
 
 def speak(text):
     """Speak the given text using TTS (non-blocking)"""
+    if not TTS_AVAILABLE:
+        return  # TTS not available, skip voice announcement
+    
     def _speak():
         with tts_lock:
             engine = init_tts()
