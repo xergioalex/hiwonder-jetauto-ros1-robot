@@ -1,10 +1,13 @@
-# Emergency Stop Script
+# Emergency Stop Scripts
 
-🛑 **EMERGENCY STOP** - Use this script to immediately stop the robot when it won't stop by other means.
+🛑 **EMERGENCY STOP** - Use these scripts to immediately stop the robot when it won't stop by other means.
 
 ## Description
 
-This is a simple, no-dependencies emergency stop script that publishes zero velocities to `/cmd_vel` to stop the robot immediately.
+Two emergency scripts are provided:
+
+1. **stop.py** - Publishes STOP commands continuously (RECOMMENDED)
+2. **kill_controllers.sh** - Kills all robot control processes (NUCLEAR OPTION)
 
 ## Requirements
 
@@ -16,12 +19,53 @@ This is a simple, no-dependencies emergency stop script that publishes zero velo
 
 ## Usage
 
-### Quick Stop (From anywhere in the repository)
+### Method 1: Continuous Stop (RECOMMENDED)
+
+This keeps the robot stopped by continuously publishing STOP commands:
 
 ```bash
 cd scripts/00.stop_robot
 python stop.py
 ```
+
+**Output:**
+```
+============================================================
+🛑 EMERGENCY STOP - Publishing STOP commands continuously
+============================================================
+The robot is now stopped and will STAY stopped.
+This script will keep publishing STOP commands at 10Hz.
+
+Press Ctrl+C when you want to exit this script.
+(Robot will remain stopped after you exit)
+============================================================
+
+Still publishing STOP... (10 commands sent)
+Still publishing STOP... (20 commands sent)
+...
+```
+
+**How it works:**
+- Publishes zero velocities at 10Hz continuously
+- Overrides any other commands being sent
+- Press Ctrl+C to exit (robot stays stopped)
+- Shows counter every second
+
+### Method 2: Kill All Controllers (NUCLEAR OPTION)
+
+If stop.py doesn't work, kill all control processes first:
+
+```bash
+cd scripts/00.stop_robot
+./kill_controllers.sh
+python stop.py
+```
+
+**What kill_controllers.sh does:**
+- Kills all Python controller scripts
+- Kills teleop_twist_keyboard processes
+- Kills processes publishing to /cmd_vel
+- Ensures nothing is sending movement commands
 
 ### Alternative: Make it global
 
@@ -36,35 +80,28 @@ Then from anywhere:
 stop-robot
 ```
 
-## What it does
-
-1. Initializes a ROS node
-2. Creates a publisher to `/cmd_vel`
-3. Publishes zero velocities 10 times (1 second total)
-4. Ensures the robot receives the stop command
-
 ## When to use
 
 - Robot is moving unexpectedly
 - Robot won't stop with normal commands
 - Emergency situation
+- After running text control and robot keeps moving
+- Battery is low and robot behaving erratically
 - Testing/debugging
 
-## Output Example
+## Why the robot might not stop
 
-```
-==================================================
-EMERGENCY STOP - Stopping robot NOW!
-==================================================
-Published STOP command 1/10
-Published STOP command 2/10
-Published STOP command 3/10
-...
-Published STOP command 10/10
-==================================================
-Robot should be stopped now.
-==================================================
-```
+### Common causes:
+1. **Multiple publishers competing** - Another script is still sending movement commands
+2. **Controller still running** - The LLM controller didn't finish its sequence
+3. **Hardware issue** - Low battery can cause erratic behavior
+4. **Motor controller stuck** - Need to restart the robot
+
+### Solutions:
+1. **First try:** `python stop.py` (continuous stop)
+2. **If that fails:** `./kill_controllers.sh` then `python stop.py`
+3. **If still moving:** Check battery voltage, might need to power cycle robot
+4. **Last resort:** Power off the robot physically
 
 ## Troubleshooting
 
