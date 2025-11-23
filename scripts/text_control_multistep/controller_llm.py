@@ -165,7 +165,7 @@ def execute_sequence(commands):
 
         # Stop after each step
         pub.publish(Twist())
-        time.sleep(0.1)  # Minimal pause between commands
+        # time.sleep(0.1)  # Optional pause between commands (commented for instant transitions)
 
 if __name__ == "__main__":
     user_input = input("Enter a multi-step command (English or Spanish): ")
