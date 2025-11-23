@@ -1,6 +1,6 @@
 import rospy
 from geometry_msgs.msg import Twist
-import openai
+import requests
 import json
 import time
 import os
@@ -20,11 +20,15 @@ def ask_llm_for_twist(command, system_prompt):
         model='gpt-4o-mini',
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": command},
+            {"role": "user", "content": command}
         ]
-    )
+    }
+    
     try:
-        return json.loads(response.choices[0].message.content)
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+        return json.loads(result['choices'][0]['message']['content'])
     except:
         return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
 
