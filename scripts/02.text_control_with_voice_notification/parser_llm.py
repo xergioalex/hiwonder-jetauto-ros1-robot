@@ -10,8 +10,16 @@ def load_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "multi_step_parser.txt"), "r", encoding='utf-8') as f:
         return f.read()
 
+def safe_print(message):
+    """Print message safely, handling Unicode encoding errors"""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        # Fallback: remove non-ASCII characters
+        print(message.encode('ascii', 'ignore').decode('ascii'))
+
 def split_into_steps(text):
-    print("Debug: Starting split_into_steps with text: {}".format(text))
+    safe_print("Debug: Starting split_into_steps with text: {}".format(text))
     
     # Check if .env file exists
     env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -85,7 +93,7 @@ def split_into_steps(text):
             return []
         
         content = result['choices'][0]['message']['content']
-        print("API Response: {}".format(content))  # Debug output
+        safe_print("API Response: {}".format(content))
         
         steps = []
         for line in content.strip().split("\n"):
