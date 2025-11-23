@@ -93,7 +93,16 @@ This is a ROS1 (Melodic) robotics project for controlling a Hiwonder JetAuto 4WD
   - `angular.x`, `angular.y`
 
 ### Command Execution
-- Commands execute for 2 seconds
+- Commands execute for duration specified in metadata (calculated from distance/angle)
+- **CRITICAL: Distance/Angle Calibration**
+  - Linear movements require **2.5x time multiplier** to compensate for acceleration/deceleration
+    - Formula: `duration = (distance / abs(linear.x)) * 2.5`
+    - Without this, robot only achieves ~40% of target distance
+    - Example: 1 meter at 0.5 m/s = 5.0 seconds (not 2.0 seconds)
+  - Angular movements require **2.0x time multiplier**
+    - Formula: `duration = (abs(angle_degrees) / (abs(angular.z) * 57.3)) * 2.0`
+    - Example: 90° at 0.5 rad/s = 6.3 seconds
+  - These factors account for robot acceleration/deceleration phases
 - Robot stops between multi-step commands
 - Publish zero-velocity Twist to stop
 - Use `rospy.Rate()` for timing
@@ -218,6 +227,10 @@ pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 - Store prompts in `prompts/` directory
 - Use clear, specific instructions
 - Enforce JSON output format when needed
+- **CRITICAL: Include calibration factors in duration calculations**
+  - Linear movements: multiply base duration by 2.5x
+  - Angular movements: multiply base duration by 2.0x
+  - Document these factors clearly in prompts
 - Test prompts with actual API
 
 ### Responses

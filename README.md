@@ -179,6 +179,9 @@ The robot will:
 - 📋 Multi-step command decomposition
 - ⚡ Automatic conversion to ROS velocity commands
 - 📏 Precise distance and angle control with metadata
+  - **Calibration factors**: 2.5x for linear movements, 2.0x for angular movements
+  - Compensates for robot acceleration/deceleration phases
+  - Ensures accurate distance execution (e.g., "avanza 1 metro" moves ~1 meter)
 - 🎤 Voice feedback for each action
 - 🌐 Bilingual support (English/Spanish)
 

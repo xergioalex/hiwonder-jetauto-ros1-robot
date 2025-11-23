@@ -172,6 +172,15 @@ The system supports **both English and Spanish** for:
 - Remember: only `linear.x` and `angular.z` are used
 - All other Twist fields must be 0
 - Commands execute for duration specified in metadata (calculated from distance/angle)
+- **CRITICAL: Distance/Angle Calibration Factors**
+  - Linear movements: Use **2.5x time multiplier** to compensate for robot acceleration/deceleration
+    - Formula: `duration = (distance / abs(linear.x)) * 2.5`
+    - Example: 1 meter at 0.5 m/s = (1.0 / 0.5) * 2.5 = 5.0 seconds
+    - Without this factor, robot only achieves ~40% of target distance
+  - Angular movements: Use **2.0x time multiplier**
+    - Formula: `duration = (abs(angle_degrees) / (abs(angular.z) * 57.3)) * 2.0`
+    - Example: 90° at 0.5 rad/s = (90 / (0.5 * 57.3)) * 2.0 = 6.3 seconds
+  - These factors account for acceleration/deceleration phases (robot doesn't instantly reach target velocity)
 - Robot stops briefly between multi-step commands
 - Voice announcements happen before each command execution
 
@@ -244,7 +253,10 @@ The system supports **both English and Spanish** for:
 - Enforces strict JSON format with velocities + metadata fields
 - Handles both English and Spanish
 - Includes velocity scaling guidelines (slow/normal/fast)
-- Provides duration calculation formulas
+- **CRITICAL: Duration calculation with calibration factors**
+  - Linear movements: `duration = (distance / abs(linear.x)) * 2.5` (2.5x multiplier)
+  - Angular movements: `duration = (abs(angle_degrees) / (abs(angular.z) * 57.3)) * 2.0` (2.0x multiplier)
+  - These factors compensate for robot acceleration/deceleration (without them, robot only achieves ~40% of target distance)
 - Contains 30+ examples for various command types
 - Supports distance specifications (meters, centimeters)
 - Supports angle specifications (degrees, quarter turns, etc.)
