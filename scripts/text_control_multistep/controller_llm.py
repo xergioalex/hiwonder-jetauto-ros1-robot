@@ -22,7 +22,7 @@ def ask_llm_for_twist(command, system_prompt):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
+        "Authorization": "Bearer {}".format(api_key)
     }
     data = {
         "model": "gpt-4o-mini",
@@ -47,7 +47,7 @@ def execute_sequence(commands):
     system_prompt = load_system_prompt()
 
     for cmd in commands:
-        print(f"Executing: {cmd}")
+        print("Executing: {}".format(cmd))
         twist_data = ask_llm_for_twist(cmd, system_prompt)
         twist = Twist()
         twist.linear.x = twist_data['linear']['x']
@@ -64,5 +64,5 @@ def execute_sequence(commands):
 if __name__ == "__main__":
     user_input = input("Enter a multi-step command (English or Spanish): ")
     steps = split_into_steps(user_input)
-    print(f"Steps: {steps}")
+    print("Steps: {}".format(steps))
     execute_sequence(steps)

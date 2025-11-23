@@ -18,7 +18,7 @@ def split_into_steps(text):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
+        "Authorization": "Bearer {}".format(api_key)
     }
     data = {
         "model": "gpt-4o-mini",
