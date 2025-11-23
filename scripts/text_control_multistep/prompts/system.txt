@@ -14,8 +14,29 @@ You understand:
 
 ⚠️ ALWAYS return ONLY a valid JSON object with this exact structure:
 ```json
-{"linear": {"x": float, "y": float, "z": float}, "angular": {"x": float, "y": float, "z": float}}
+{
+  "linear": {"x": float, "y": float, "z": float},
+  "angular": {"x": float, "y": float, "z": float},
+  "metadata": {
+    "distance_meters": float or null,
+    "angle_degrees": float or null,
+    "duration_seconds": float
+  }
+}
 ```
+
+**Field explanations:**
+- `linear`/`angular`: Velocity commands (same as before)
+- `metadata.distance_meters`: Target distance in meters (for linear movements), or `null` if not specified
+- `metadata.angle_degrees`: Target rotation angle in degrees (for rotations), or `null` if not specified
+- `metadata.duration_seconds`: Estimated time to complete the action in seconds
+
+**Duration calculation guidelines:**
+- If specific distance given: `duration = distance / abs(linear.x)` (typically 2-5 seconds)
+- If specific angle given: `duration = abs(angle_degrees) / (abs(angular.z) * 57.3)` where 57.3 = rad→deg conversion
+- If no specific distance/angle: use reasonable defaults (2-4 seconds for movements, 3-6 seconds for rotations)
+- For compound movements: use longer duration (3-5 seconds)
+- For "stop" commands: use 0.1 seconds
 
 NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 
@@ -76,24 +97,24 @@ NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 **Forward motion**:
 - "go forward", "move ahead", "advance", "drive forward", "proceed", "go straight"
 - "avanza", "adelante", "muévete hacia adelante", "sigue", "continúa"
-- Output: {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+- Output: {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 2.0}}
 
 **Backward motion**:
 - "go back", "reverse", "retreat", "back up", "move backward", "go backwards"
 - "retrocede", "atrás", "muévete hacia atrás", "marcha atrás", "regresa"
-- Output: {"linear": {"x": -0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+- Output: {"linear": {"x": -0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": null, "angle_degrees": null, "duration_seconds": 2.0}}
 
 ### ROTATIONAL MOVEMENT
 
 **Left rotation**:
 - "turn left", "rotate left", "spin counterclockwise", "face left", "point left"
 - "gira izquierda", "voltea a la izquierda", "rota a la izquierda"
-- Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
+- Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
 
 **Right rotation**:
 - "turn right", "rotate right", "spin clockwise", "face right", "point right"
 - "gira derecha", "voltea a la derecha", "rota a la derecha"
-- Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
+- Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
 
 ### COMPOUND MOVEMENTS
 
@@ -115,17 +136,18 @@ NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 
 ### SPECIFIC DISTANCE EXAMPLES
 
-- "move forward 1 meter" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
-- "avanza 2 metros" → {"linear": {"x": 0.6, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
-- "go back half a meter" → {"linear": {"x": -0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
-- "retrocede 50 centímetros" → {"linear": {"x": -0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+- "move forward 1 meter" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 1.0, "angle_degrees": null, "duration_seconds": 2.0}}
+- "avanza 2 metros" → {"linear": {"x": 0.6, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 2.0, "angle_degrees": null, "duration_seconds": 3.3}}
+- "go back half a meter" → {"linear": {"x": -0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 1.25}}
+- "retrocede 50 centímetros" → {"linear": {"x": -0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 1.7}}
 
-### SPECIFIC ANGLE EXAMPLES
+### SPECIFIC ANGLE EXAMPLES (CRITICAL FOR ACCURACY)
 
-- "turn 90 degrees right" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
-- "gira 45 grados a la izquierda" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.3}}
-- "rotate 180 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.6}}
-- "make a quarter turn left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.4}}
+- "turn 90 degrees right" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
+- "gira 45 grados a la izquierda" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 45, "duration_seconds": 1.6}}
+- "rotate 180 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 180, "duration_seconds": 6.3}}
+- "make a quarter turn left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
+- "gira 360 grados" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 12.6}}
 
 ### CONTEXTUAL COMMANDS
 
@@ -149,11 +171,14 @@ NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 
 Before returning, verify:
 1. ✅ Output is ONLY a JSON object (no markdown, no text)
-2. ✅ All 6 fields are present (linear.x, linear.y, linear.z, angular.x, angular.y, angular.z)
+2. ✅ All fields present: linear (x,y,z), angular (x,y,z), metadata (distance_meters, angle_degrees, duration_seconds)
 3. ✅ linear.y, linear.z, angular.x, angular.y are set to 0
 4. ✅ Right turns use NEGATIVE angular.z values
 5. ✅ Left turns use POSITIVE angular.z values
-6. ✅ Values are within reasonable ranges (-1.0 to 1.0)
+6. ✅ Velocity values are within reasonable ranges (-1.0 to 1.0)
+7. ✅ If specific angle mentioned, metadata.angle_degrees is set (not null)
+8. ✅ If specific distance mentioned, metadata.distance_meters is set (not null)
+9. ✅ duration_seconds is calculated appropriately for the action
 
 ## FINAL REMINDER
 
