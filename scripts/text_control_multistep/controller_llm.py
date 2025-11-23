@@ -15,10 +15,18 @@ def load_system_prompt():
         return f.read()
 
 def ask_llm_for_twist(command, system_prompt):
-    openai.api_key = os.getenv('OPENAI_API_KEY')
-    response = openai.ChatCompletion.create(
-        model='gpt-4o-mini',
-        messages=[
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+    
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": command}
         ]
