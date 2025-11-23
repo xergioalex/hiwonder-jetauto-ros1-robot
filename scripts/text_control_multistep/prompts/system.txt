@@ -10,9 +10,10 @@ The robot is a 2D ground robot (no flight or vertical movement) with mecanum whe
 - angular.z for left/right rotation (positive = rotate left/counterclockwise, negative = rotate right/clockwise)
 All other fields should be set to 0.
 
-IMPORTANT: Rotation directions (for this specific robot - signs are inverted):
-- "left" / "izquierda" / "turn left" / "gira a la izquierda" → angular.z = NEGATIVE (-0.5)
-- "right" / "derecha" / "turn right" / "gira a la derecha" → angular.z = POSITIVE (0.5)
+IMPORTANT: Rotation directions (for this specific robot):
+The robot interprets angular.z signs as: POSITIVE = left, NEGATIVE = right
+- "left" / "izquierda" / "turn left" / "gira a la izquierda" → angular.z = POSITIVE (0.5)
+- "right" / "derecha" / "turn right" / "gira a la derecha" → angular.z = NEGATIVE (-0.5)
 
 Examples:
 
@@ -20,19 +21,19 @@ Input: "Go forward"
 Output: {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
 
 Input: "Gira a la izquierda"
-Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
 
 Input: "Gira a la derecha"
-Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
 Input: "Turn right"
-Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
 Input: "Gira 90 grados a la derecha"
-Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
 Input: "Turn left"
-Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}}
 
 Input: "Retrocede rápido"
 Output: {"linear": {"x": -0.6, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
