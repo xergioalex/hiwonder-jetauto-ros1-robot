@@ -30,7 +30,7 @@ sudo apt-get install espeak espeak-data libespeak-dev
 ### 2. Install Python Dependencies
 
 ```bash
-cd scripts/text_control_multistep
+cd scripts/02.text_control_with_voice_notification
 pip install -r requirements.txt
 ```
 
@@ -156,7 +156,7 @@ Executing: Avanza un metro
 ## File Structure
 
 ```
-text_control_multistep/
+02.text_control_with_voice_notification/
 ├── controller_llm.py          # Main controller
 ├── parser_llm.py              # Multi-step command parser
 ├── requirements.txt           # Python dependencies
@@ -188,7 +188,7 @@ In `controller_llm.py`:
 ## Troubleshooting
 
 ### Error: "OPENAI_API_KEY not found"
-- Verify that the `.env` file exists in the `text_control_multistep/` directory
+- Verify that the `.env` file exists in the `02.text_control_with_voice_notification/` directory
 - Verify that the variable is named exactly `OPENAI_API_KEY`
 
 ### Error: "No module named 'rospy'"
