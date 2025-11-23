@@ -31,20 +31,31 @@ This is a ROS1 (Melodic) robotics project for controlling a **Hiwonder JetAuto 4
 
 ```
 hiwonder-jetauto-ros1-robot/
-├── JETAUTO_GUIDE.md          # Complete technical guide (316 lines)
+├── JETAUTO_GUIDE.md          # Complete technical guide
 ├── README.md                 # Main project README
 ├── CLAUDE.md                 # This file
 ├── .cursorrules              # Cursor IDE rules
+├── .env                      # OpenAI API key (not in git, global for all scripts)
+├── .env.example              # Example environment file
+├── .gitignore                # Git ignore rules (includes .env)
 └── scripts/
-    └── text_control_multistep/
-        ├── controller_llm.py  # Main controller using OpenAI + TTS
-        ├── parser_llm.py      # Multi-step command parser
-        ├── requirements.txt   # Python dependencies (requests, python-dotenv, pyttsx3)
-        ├── README.md          # Module-specific documentation
-        ├── .gitignore         # Ignores .env file
+    ├── 01.text_control/                          # Basic text control (no voice)
+    │   ├── controller_llm.py                     # Main controller using OpenAI
+    │   ├── parser_llm.py                         # Multi-step command parser
+    │   ├── requirements.txt                      # Python dependencies
+    │   ├── README.md                             # Script documentation
+    │   └── prompts/
+    │       ├── system.txt                        # Twist conversion with metadata
+    │       └── multi_step_parser.txt             # Command splitting prompt
+    │
+    └── 02.text_control_with_voice_notification/ # Text control with TTS
+        ├── controller_llm.py                     # Controller with OpenAI + TTS
+        ├── parser_llm.py                         # Multi-step command parser
+        ├── requirements.txt                      # Dependencies (includes pyttsx3)
+        ├── README.md                             # Script documentation
         └── prompts/
-            ├── system.txt     # System prompt for Twist conversion with metadata
-            └── multi_step_parser.txt  # Prompt for command splitting
+            ├── system.txt                        # Twist conversion with metadata
+            └── multi_step_parser.txt             # Command splitting prompt
 ```
 
 ## Robot Hardware
@@ -106,8 +117,10 @@ hiwonder-jetauto-ros1-robot/
 
 ### File Path Handling
 - Always use `os.path.dirname(__file__)` for relative paths
-- Prompts stored in `prompts/` subdirectory
-- `.env` file in same directory as scripts
+- Prompts stored in `prompts/` subdirectory within each script folder
+- **`.env` file is GLOBAL** - stored in repository root, not in script directories
+- Scripts calculate repo root: `repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))`
+- Load .env from root: `load_dotenv(os.path.join(repo_root, '.env'))`
 
 ### Error Handling
 - JSON parsing errors return zero-velocity Twist with default metadata
@@ -167,7 +180,9 @@ The system supports **both English and Spanish** for:
 ## Environment Variables
 
 ### Required
-- `OPENAI_API_KEY` - Stored in `scripts/text_control_multistep/.env`
+- `OPENAI_API_KEY` - Stored in **repository root** `.env` file (shared by all scripts)
+- Location: `/path/to/hiwonder-jetauto-ros1-robot/.env`
+- Example file provided: `.env.example`
 
 ### ROS Environment (set in shell)
 - `ROS_MASTER_URI` - Default: `http://localhost:11311`

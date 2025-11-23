@@ -2,8 +2,9 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+# Load environment variables from .env file in repo root
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+load_dotenv(os.path.join(repo_root, '.env'))
 
 def load_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "multi_step_parser.txt"), "r", encoding='utf-8') as f:

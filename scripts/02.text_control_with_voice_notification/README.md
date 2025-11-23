@@ -42,13 +42,16 @@ pip install requests python-dotenv pyttsx3
 
 ### 3. Configure OpenAI API Key
 
-Create a `.env` file in the `text_control_multistep/` directory with your API key:
+Create a `.env` file in the **repository root** (not in this script directory) with your API key:
 
 ```bash
-OPENAI_API_KEY=your_api_key_here
+# From the repository root
+cp .env.example .env
+# Edit .env and add your key
+echo "OPENAI_API_KEY=your_api_key_here" > .env
 ```
 
-**Important**: The `.env` file is in `.gitignore` and will not be uploaded to the repository. Make sure to create this file locally.
+**Important**: The `.env` file is global for all scripts and is located at the repository root. It's in `.gitignore` and will not be uploaded to the repository.
 
 ### 4. Verify ROS is Configured
 

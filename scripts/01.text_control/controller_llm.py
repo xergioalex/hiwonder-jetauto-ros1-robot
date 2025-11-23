@@ -7,8 +7,9 @@ import os
 from dotenv import load_dotenv
 from parser_llm import split_into_steps
 
-# Load environment variables from .env file
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+# Load environment variables from .env file in repo root
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+load_dotenv(os.path.join(repo_root, '.env'))
 
 def load_system_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r", encoding='utf-8') as f:

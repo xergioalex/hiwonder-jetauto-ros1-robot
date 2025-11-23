@@ -26,13 +26,26 @@ hiwonder-jetauto-ros1-robot/
 ├── README.md                 # This file
 ├── CLAUDE.md                 # Documentation for AI assistants
 ├── .cursorrules              # Development rules for Cursor
+├── .env                      # OpenAI API key (create from .env.example)
+├── .env.example              # Example environment file
 └── scripts/
-    └── text_control_multistep/
-        ├── controller_llm.py  # Controller with OpenAI
-        ├── parser_llm.py      # Multi-step command parser
-        ├── requirements.txt   # Python dependencies
-        ├── README.md          # Module documentation
-        └── prompts/          # OpenAI prompts
+    ├── 01.text_control/                          # Basic text control (no voice)
+    │   ├── controller_llm.py                     # Main controller with OpenAI
+    │   ├── parser_llm.py                         # Multi-step command parser
+    │   ├── requirements.txt                      # Python dependencies
+    │   ├── README.md                             # Script documentation
+    │   └── prompts/                              # OpenAI prompts
+    │       ├── system.txt                        # Twist conversion prompt
+    │       └── multi_step_parser.txt             # Command splitting prompt
+    │
+    └── 02.text_control_with_voice_notification/ # Text control with TTS
+        ├── controller_llm.py                     # Controller with OpenAI + TTS
+        ├── parser_llm.py                         # Multi-step command parser
+        ├── requirements.txt                      # Python dependencies (includes pyttsx3)
+        ├── README.md                             # Script documentation
+        └── prompts/                              # OpenAI prompts
+            ├── system.txt                        # Twist conversion prompt
+            └── multi_step_parser.txt             # Command splitting prompt
 ```
 
 ## 🚀 Quick Start
@@ -63,24 +76,45 @@ roslaunch jetauto_bringup bringup.launch
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
-### 4. Text Control with Voice (OpenAI + TTS)
+### 4. Setup OpenAI API Key (Required for Text Control)
 
-The robot can understand natural language commands in English and Spanish, and announces each action before executing it!
+Create a `.env` file in the **repository root** with your OpenAI API key:
 
-See complete documentation in [`scripts/text_control_multistep/README.md`](scripts/text_control_multistep/README.md)
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your API key
+echo "OPENAI_API_KEY=your_key_here" > .env
+```
+
+### 5. Text Control Scripts
+
+The project includes two text control options:
+
+#### Option A: Basic Text Control (No Voice)
+Located in `scripts/01.text_control/`
+
+```bash
+cd scripts/01.text_control
+pip install -r requirements.txt
+python controller_llm.py
+```
+
+#### Option B: Text Control with Voice Announcements (Recommended)
+Located in `scripts/02.text_control_with_voice_notification/`
+
+The robot announces each action before executing it!
 
 ```bash
 # Install system dependencies for voice
 sudo apt-get install espeak espeak-data libespeak-dev
 
 # Install Python dependencies
-cd scripts/text_control_multistep
+cd scripts/02.text_control_with_voice_notification
 pip install -r requirements.txt
 
-# Create .env with OPENAI_API_KEY
-echo "OPENAI_API_KEY=your_key_here" > .env
-
-# Run controller
+# Run controller (reads .env from repo root)
 python controller_llm.py
 ```
 
@@ -104,12 +138,13 @@ The robot will:
   - Battery status
   - Teleoperation
 
-- **[scripts/text_control_multistep/README.md](scripts/text_control_multistep/README.md)** - Natural language control with voice:
-  - Installation and configuration
-  - Text-to-Speech (TTS) setup
-  - Using OpenAI for intelligent command parsing
-  - Precise distance and angle control
-  - Examples in English and Spanish
+- **Script Documentation:**
+  - **[scripts/01.text_control/README.md](scripts/01.text_control/README.md)** - Basic text control
+  - **[scripts/02.text_control_with_voice_notification/README.md](scripts/02.text_control_with_voice_notification/README.md)** - Text control with voice
+    - Text-to-Speech (TTS) setup
+    - Voice announcements
+    - Precise distance and angle control
+    - Examples in English and Spanish
 
 ## 🔧 Main Features
 
