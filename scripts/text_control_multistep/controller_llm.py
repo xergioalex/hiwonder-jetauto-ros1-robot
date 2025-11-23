@@ -36,8 +36,25 @@ def ask_llm_for_twist(command, system_prompt):
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
         result = response.json()
-        return json.loads(result['choices'][0]['message']['content'])
-    except:
+        
+        if 'choices' not in result or len(result['choices']) == 0:
+            print("Error: No choices in API response")
+            return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+        
+        content = result['choices'][0]['message']['content']
+        return json.loads(content)
+    except requests.exceptions.RequestException as e:
+        print("Error making API request: {}".format(e))
+        return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+    except (KeyError, ValueError) as e:
+        print("Error parsing API response: {}".format(e))
+        if 'result' in locals():
+            print("Response content: {}".format(result.get('choices', [{}])[0].get('message', {}).get('content', 'N/A')))
+        return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        import traceback
+        traceback.print_exc()
         return {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}}
 
 def execute_sequence(commands):
