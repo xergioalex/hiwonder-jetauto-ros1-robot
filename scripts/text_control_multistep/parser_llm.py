@@ -11,8 +11,8 @@ def load_prompt():
 
 def split_into_steps(text):
     system_prompt = load_prompt()
-    client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    response = client.chat.completions.create(
+    openai.api_key = os.getenv('OPENAI_API_KEY')
+    response = openai.ChatCompletion.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},

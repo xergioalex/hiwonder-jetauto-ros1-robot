@@ -15,8 +15,8 @@ def load_system_prompt():
         return f.read()
 
 def ask_llm_for_twist(command, system_prompt):
-    client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    response = client.chat.completions.create(
+    openai.api_key = os.getenv('OPENAI_API_KEY')
+    response = openai.ChatCompletion.create(
         model='gpt-4o-mini',
         messages=[
             {"role": "system", "content": system_prompt},
