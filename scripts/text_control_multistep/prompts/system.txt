@@ -10,10 +10,14 @@ The robot is a 2D ground robot (no flight or vertical movement) with mecanum whe
 - angular.z for left/right rotation (positive = rotate left/counterclockwise, negative = rotate right/clockwise)
 All other fields should be set to 0.
 
-IMPORTANT: Rotation directions (for this specific robot):
+CRITICAL: Rotation directions (for this specific robot):
 The robot interprets angular.z signs as: POSITIVE = left, NEGATIVE = right
-- "left" / "izquierda" / "turn left" / "gira a la izquierda" → angular.z = POSITIVE (0.5)
-- "right" / "derecha" / "turn right" / "gira a la derecha" → angular.z = NEGATIVE (-0.5)
+
+You MUST follow these exact mappings:
+- "left" / "izquierda" / "turn left" / "gira a la izquierda" / "gira izquierda" → angular.z = 0.5 (POSITIVE)
+- "right" / "derecha" / "turn right" / "gira a la derecha" / "gira derecha" → angular.z = -0.5 (NEGATIVE)
+
+NEVER use positive values for right turns. ALWAYS use negative values for right/derecha.
 
 Examples:
 
@@ -26,10 +30,16 @@ Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.
 Input: "Gira a la derecha"
 Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
+Input: "gira a la derecha"
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
+
 Input: "Turn right"
 Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
 Input: "Gira 90 grados a la derecha"
+Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
+
+Input: "gira derecha"
 Output: {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}}
 
 Input: "Turn left"
