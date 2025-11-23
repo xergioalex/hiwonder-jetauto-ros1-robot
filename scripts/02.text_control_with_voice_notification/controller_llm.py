@@ -173,6 +173,57 @@ def load_system_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r", encoding='utf-8') as f:
         return f.read()
 
+def validate_command(command):
+    """Validate if command is a valid robot movement command and return response if invalid"""
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        return {"valid": True, "message": None}  # Skip validation if no API key
+    
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(api_key)
+    }
+    
+    prompt = """Determine if this is a valid robot movement command. A valid command is one that instructs a mobile robot to move, rotate, or navigate (e.g., "move forward", "turn left", "go back 2 meters", "rotate 90 degrees").
+
+If the command is NOT a movement command (e.g., questions, general knowledge, non-robot actions), respond with JSON:
+{"valid": false, "message": "I didn't understand that command. I can only execute movement instructions. Try commands like: move forward, turn left, go back, rotate 90 degrees, advance 1 meter, etc."}
+
+If the command IS a valid movement command, respond with JSON:
+{"valid": true}
+
+Command: {}""".format(command)
+    
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "You are a validator for robot movement commands. Respond ONLY with valid JSON, no additional text."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3,
+        "max_tokens": 150
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            if 'choices' in result and len(result['choices']) > 0:
+                content = result['choices'][0]['message']['content'].strip()
+                # Remove markdown code blocks if present
+                if content.startswith('```'):
+                    content = content.split('```')[1]
+                    if content.startswith('json'):
+                        content = content[4:]
+                content = content.strip()
+                validation_result = json.loads(content)
+                return validation_result
+    except:
+        pass  # If validation fails, assume valid and proceed
+    
+    return {"valid": True, "message": None}  # Default to valid if validation fails
+
 def ask_llm_for_twist(command, system_prompt):
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
@@ -290,11 +341,35 @@ def execute_sequence(commands):
 
     for cmd in commands:
         safe_print("Executing: {}".format(cmd))
-
+        
+        # Validate command before executing
+        validation = validate_command(cmd)
+        if not validation.get("valid", True):
+            message = validation.get("message", "I didn't understand that command. Please provide a movement instruction.")
+            safe_print("\n⚠️  {}".format(message))
+            # Announce error via TTS
+            speak("I didn't understand that command. Please provide a movement instruction.")
+            print("")  # Empty line for readability
+            continue  # Skip this command and move to next
+        
         # Announce the command via TTS
         speak(cmd)
 
         twist_data = ask_llm_for_twist(cmd, system_prompt)
+        
+        # Check if the command resulted in zero movement (might be invalid)
+        if (twist_data['linear']['x'] == 0 and twist_data['angular']['z'] == 0 and 
+            twist_data.get('metadata', {}).get('duration_seconds', 0) <= 0.1):
+            # This might be an invalid command that was converted to stop
+            # Double-check with validation
+            validation = validate_command(cmd)
+            if not validation.get("valid", True):
+                message = validation.get("message", "I didn't understand that command. Please provide a movement instruction.")
+                safe_print("\n⚠️  {}".format(message))
+                # Announce error via TTS
+                speak("I didn't understand that command. Please provide a movement instruction.")
+                print("")  # Empty line for readability
+                continue
 
         # Extract metadata
         metadata = twist_data.get('metadata', {})
