@@ -345,6 +345,18 @@ if __name__ == "__main__":
     print("=" * 70)
     print("")
 
+    # Initialize TTS and greet user
+    print("Initializing robot controller...")
+    init_tts()
+    time.sleep(0.5)  # Give TTS time to initialize
+    
+    # Greet user with voice announcement
+    greeting = "Robot ready. Waiting for commands."
+    print(greeting)
+    speak(greeting)
+    time.sleep(1.0)  # Wait for greeting to finish speaking
+    print("")
+
     try:
         while not should_exit:
             # Get user input
