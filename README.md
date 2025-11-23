@@ -29,6 +29,10 @@ hiwonder-jetauto-ros1-robot/
 ├── .env                      # OpenAI API key (create from .env.example)
 ├── .env.example              # Example environment file
 └── scripts/
+    ├── 00.stop_robot/                            # 🛑 EMERGENCY STOP
+    │   ├── stop.py                               # Immediately stops the robot
+    │   └── README.md                             # Usage instructions
+    │
     ├── 01.text_control/                          # Basic text control (no voice)
     │   ├── controller_llm.py                     # Main controller with OpenAI
     │   ├── parser_llm.py                         # Multi-step command parser
@@ -70,13 +74,24 @@ export ROS_HOSTNAME="localhost"
 roslaunch jetauto_bringup bringup.launch
 ```
 
-### 3. Keyboard Control
+### 3. Emergency Stop (Critical)
+
+🛑 **If the robot won't stop**, use the emergency stop script:
+
+```bash
+cd scripts/00.stop_robot
+python stop.py
+```
+
+This immediately publishes zero velocities to `/cmd_vel` to stop the robot.
+
+### 4. Keyboard Control
 
 ```bash
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
-### 4. Setup OpenAI API Key (Required for Text Control)
+### 5. Setup OpenAI API Key (Required for Text Control)
 
 Create a `.env` file in the **repository root** with your OpenAI API key:
 
@@ -88,7 +103,7 @@ cp .env.example .env
 echo "OPENAI_API_KEY=your_key_here" > .env
 ```
 
-### 5. Text Control Scripts
+### 6. Text Control Scripts
 
 The project includes two text control options:
 

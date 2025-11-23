@@ -39,6 +39,10 @@ hiwonder-jetauto-ros1-robot/
 ├── .env.example              # Example environment file
 ├── .gitignore                # Git ignore rules (includes .env)
 └── scripts/
+    ├── 00.stop_robot/                            # 🛑 EMERGENCY STOP
+    │   ├── stop.py                               # Immediately stops the robot
+    │   └── README.md                             # Usage instructions
+    │
     ├── 01.text_control/                          # Basic text control (no voice)
     │   ├── controller_llm.py                     # Main controller using OpenAI
     │   ├── parser_llm.py                         # Multi-step command parser
