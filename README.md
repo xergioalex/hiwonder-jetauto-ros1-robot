@@ -63,16 +63,36 @@ roslaunch jetauto_bringup bringup.launch
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
-### 4. Text Control (OpenAI)
+### 4. Text Control with Voice (OpenAI + TTS)
+
+The robot can understand natural language commands in English and Spanish, and announces each action before executing it!
 
 See complete documentation in [`scripts/text_control_multistep/README.md`](scripts/text_control_multistep/README.md)
 
 ```bash
+# Install system dependencies for voice
+sudo apt-get install espeak espeak-data libespeak-dev
+
+# Install Python dependencies
 cd scripts/text_control_multistep
 pip install -r requirements.txt
+
 # Create .env with OPENAI_API_KEY
+echo "OPENAI_API_KEY=your_key_here" > .env
+
+# Run controller
 python controller_llm.py
 ```
+
+**Example:**
+```
+Enter command: Avanza 2 metros, gira 180 grados, retrocede
+```
+
+The robot will:
+1. 🔊 Say "Avanza 2 metros" → Move forward 2 meters
+2. 🔊 Say "Gira 180 grados" → Rotate 180 degrees
+3. 🔊 Say "Retrocede" → Move backward
 
 ## 📚 Documentation
 
@@ -84,27 +104,33 @@ python controller_llm.py
   - Battery status
   - Teleoperation
 
-- **[scripts/text_control_multistep/README.md](scripts/text_control_multistep/README.md)** - Natural language control:
+- **[scripts/text_control_multistep/README.md](scripts/text_control_multistep/README.md)** - Natural language control with voice:
   - Installation and configuration
-  - Using OpenAI for commands
+  - Text-to-Speech (TTS) setup
+  - Using OpenAI for intelligent command parsing
+  - Precise distance and angle control
   - Examples in English and Spanish
 
 ## 🔧 Main Features
 
 ### Robust Control
-- Keyboard teleoperation
-- Predefined movement scripts
-- Natural language control (English/Spanish)
+- ⌨️ Keyboard teleoperation
+- 📝 Predefined movement scripts
+- 🗣️ Natural language control (English/Spanish)
+- 🔊 Voice announcements (Text-to-Speech)
 
 ### SLAM and Navigation
-- Mapping with gmapping
-- Localization with AMCL
-- Autonomous navigation
+- 🗺️ Mapping with gmapping
+- 📍 Localization with AMCL
+- 🎯 Autonomous navigation
 
 ### AI Integration
-- Text command control using OpenAI GPT
-- Multi-step command parsing
-- Automatic conversion to ROS commands
+- 🤖 Intelligent command parsing using OpenAI GPT-4o-mini
+- 📋 Multi-step command decomposition
+- ⚡ Automatic conversion to ROS velocity commands
+- 📏 Precise distance and angle control with metadata
+- 🎤 Voice feedback for each action
+- 🌐 Bilingual support (English/Spanish)
 
 ## 🛠️ Main ROS Packages
 
@@ -118,11 +144,16 @@ python controller_llm.py
 
 ## 📋 Requirements
 
+### System Requirements
 - **ROS1 Melodic** installed and configured
 - **Python 3.6+**
-- **OpenAI API Key** (for text control)
 - **Jetson Orin Nano** with Ubuntu 18.04
 - **ROS Workspace:** `~/jetauto_ws`
+
+### For Natural Language Control (Optional)
+- **OpenAI API Key** - Get at [platform.openai.com](https://platform.openai.com)
+- **espeak** - Text-to-Speech engine (`sudo apt-get install espeak espeak-data libespeak-dev`)
+- **pyttsx3** - Python TTS library (`pip install pyttsx3`)
 
 ## 🔍 Troubleshooting
 

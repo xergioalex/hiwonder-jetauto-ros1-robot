@@ -22,7 +22,8 @@ This is a ROS1 (Melodic) robotics project for controlling a **Hiwonder JetAuto 4
 ### Key Technologies
 - **ROS1 Melodic** - Robot Operating System
 - **Python 3.6+** - Primary scripting language
-- **OpenAI API** - For natural language control
+- **OpenAI API** - For natural language control (GPT-4o-mini)
+- **pyttsx3 + espeak** - Text-to-Speech for voice announcements
 - **Jetson Orin Nano** - NVIDIA embedded computing platform
 - **Ubuntu 18.04** - Operating system
 
@@ -36,13 +37,13 @@ hiwonder-jetauto-ros1-robot/
 ├── .cursorrules              # Cursor IDE rules
 └── scripts/
     └── text_control_multistep/
-        ├── controller_llm.py  # Main controller using OpenAI
+        ├── controller_llm.py  # Main controller using OpenAI + TTS
         ├── parser_llm.py      # Multi-step command parser
-        ├── requirements.txt   # Python dependencies (openai, python-dotenv)
+        ├── requirements.txt   # Python dependencies (requests, python-dotenv, pyttsx3)
         ├── README.md          # Module-specific documentation
         ├── .gitignore         # Ignores .env file
         └── prompts/
-            ├── system.txt     # System prompt for Twist conversion
+            ├── system.txt     # System prompt for Twist conversion with metadata
             └── multi_step_parser.txt  # Prompt for command splitting
 ```
 
@@ -90,10 +91,18 @@ hiwonder-jetauto-ros1-robot/
 ## Code Patterns
 
 ### OpenAI Integration
-- Uses `openai` Python library (v1.0.0+)
+- Uses OpenAI API via `requests` library
 - API key stored in `.env` file (not in git)
 - Model used: `gpt-4o-mini` (can be changed to `gpt-4o`, `gpt-3.5-turbo`, etc.)
 - Environment variables loaded using `python-dotenv`
+- Returns JSON with velocities + metadata (distance, angle, duration)
+
+### Text-to-Speech Integration
+- Uses `pyttsx3` library with `espeak` backend
+- Thread-safe implementation with `threading.Lock`
+- Non-blocking speech (runs in separate thread)
+- Graceful degradation: continues without TTS if unavailable
+- Configurable rate (150 words/min) and volume (0.9)
 
 ### File Path Handling
 - Always use `os.path.dirname(__file__)` for relative paths
@@ -101,8 +110,9 @@ hiwonder-jetauto-ros1-robot/
 - `.env` file in same directory as scripts
 
 ### Error Handling
-- JSON parsing errors return zero-velocity Twist
+- JSON parsing errors return zero-velocity Twist with default metadata
 - Graceful degradation on API failures
+- TTS errors are logged but don't stop execution
 
 ## Language Support
 
@@ -110,6 +120,7 @@ The system supports **both English and Spanish** for:
 - Natural language commands
 - Multi-step command parsing
 - Movement instructions
+- Voice announcements (TTS synthesizes both languages)
 
 ## Development Guidelines
 
@@ -143,8 +154,9 @@ The system supports **both English and Spanish** for:
 ### Modifying Movement Logic
 - Remember: only `linear.x` and `angular.z` are used
 - All other Twist fields must be 0
-- Commands execute for 2 seconds then stop
-- Robot stops between multi-step commands
+- Commands execute for duration specified in metadata (calculated from distance/angle)
+- Robot stops briefly between multi-step commands
+- Voice announcements happen before each command execution
 
 ### Debugging
 - Check ROS topics: `rostopic list`, `rostopic echo /cmd_vel`
@@ -166,8 +178,10 @@ The system supports **both English and Spanish** for:
 - Test with ROS master running
 - Verify `/cmd_vel` topic is being subscribed
 - Test both English and Spanish commands
-- Check OpenAI API responses are valid JSON
+- Check OpenAI API responses are valid JSON with metadata field
 - Verify robot stops between commands
+- Test TTS functionality with both languages
+- Verify precise angle/distance execution (e.g., 180° rotation completes fully)
 
 ## Known Issues & Solutions
 
@@ -185,13 +199,21 @@ The system supports **both English and Spanish** for:
 - Check API key is valid and has credits
 - Model availability may vary by region
 
+### TTS Issues
+- Install espeak: `sudo apt-get install espeak espeak-data libespeak-dev`
+- Install pyttsx3: `pip install pyttsx3`
+- Test espeak: `espeak "test message"`
+- Check for audio output device availability
+- TTS will gracefully fail and continue without voice if unavailable
+
 ## File-Specific Notes
 
 ### `controller_llm.py`
 - Main entry point for text control
-- Initializes ROS node
-- Publishes Twist messages
-- Executes commands sequentially with 2-second delays
+- Initializes ROS node and TTS engine
+- Announces each command via speech before execution
+- Extracts metadata (distance, angle, duration) from LLM response
+- Publishes velocity commands at 10Hz for smooth control
 
 ### `parser_llm.py`
 - Splits multi-step commands into individual steps
@@ -199,13 +221,21 @@ The system supports **both English and Spanish** for:
 - Returns list of command strings
 
 ### `prompts/system.txt`
-- Converts natural language to Twist JSON
-- Enforces JSON-only output
+- Converts natural language to Twist JSON with metadata
+- Enforces strict JSON format with velocities + metadata fields
 - Handles both English and Spanish
+- Includes velocity scaling guidelines (slow/normal/fast)
+- Provides duration calculation formulas
+- Contains 30+ examples for various command types
+- Supports distance specifications (meters, centimeters)
+- Supports angle specifications (degrees, quarter turns, etc.)
 
 ### `prompts/multi_step_parser.txt`
-- Splits complex commands into steps
+- Splits complex commands into atomic steps
+- Advanced parsing strategies for temporal connectors and conjunctions
+- Handles pattern-based commands (repeat, loops)
 - Returns numbered list format
+- 15+ example categories
 - No explanations, just steps
 
 ## Future Enhancements
