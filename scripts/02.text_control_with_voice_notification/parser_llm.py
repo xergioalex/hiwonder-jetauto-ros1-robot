@@ -18,8 +18,54 @@ def safe_print(message):
         # Fallback: remove non-ASCII characters
         print(message.encode('ascii', 'ignore').decode('ascii'))
 
+def translate_to_english(text):
+    """Translate commands from any language to English for better LLM understanding"""
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        return text  # Return original if no API key
+    
+    # Simple check: if text contains common non-English words, translate it
+    # This helps avoid unnecessary API calls for English commands
+    english_indicators = ['move', 'go', 'turn', 'rotate', 'forward', 'backward', 'left', 'right', 
+                         'meter', 'meters', 'degree', 'degrees', 'then', 'and', 'stop']
+    text_lower = text.lower()
+    has_english = any(indicator in text_lower for indicator in english_indicators)
+    
+    # If it looks like English already, skip translation
+    if has_english and len([w for w in text_lower.split() if w in english_indicators]) >= 2:
+        return text  # Likely already in English
+    
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(api_key)
+    }
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "You are a translator. Translate robot movement commands from any language to English. Keep the meaning and structure exactly the same. Only return the translated text, no explanations, no additional text."},
+            {"role": "user", "content": text}
+        ],
+        "temperature": 0.3
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=15)
+        if response.status_code == 200:
+            result = response.json()
+            if 'choices' in result and len(result['choices']) > 0:
+                translated = result['choices'][0]['message']['content'].strip()
+                safe_print("Debug: Translated to English: {}".format(translated))
+                return translated
+    except:
+        pass  # If translation fails, return original text
+    
+    return text  # Return original if translation fails
+
 def split_into_steps(text):
-    safe_print("Debug: Starting split_into_steps with text: {}".format(text))
+    # Translate to English first for better LLM understanding
+    english_text = translate_to_english(text)
+    safe_print("Debug: Starting split_into_steps with text: {}".format(english_text))
     
     # Check if .env file exists
     env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -54,7 +100,7 @@ def split_into_steps(text):
         "model": "gpt-4o-mini",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
+            {"role": "user", "content": english_text}
         ]
     }
     
@@ -105,7 +151,7 @@ def split_into_steps(text):
         if len(steps) == 0:
             # If no numbered steps found, treat the whole command as a single step
             print("Warning: No numbered steps found, using command as single step")
-            steps = [text]
+            steps = [english_text]
 
         # ALWAYS add a stop command at the end for safety
         if steps and steps[-1].lower() not in ['stop', 'para', 'alto', 'detente', 'halt', 'freeze']:

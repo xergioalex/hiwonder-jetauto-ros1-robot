@@ -6,6 +6,7 @@ import time
 import os
 import signal
 import sys
+import re
 from dotenv import load_dotenv
 from parser_llm import split_into_steps
 import threading
@@ -66,17 +67,97 @@ def init_tts():
             tts_engine = None
     return tts_engine
 
+def format_command_for_speech(command):
+    """Format command text to be clearer when spoken by TTS using OpenAI"""
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        return command  # Return original if no API key
+    
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(api_key)
+    }
+    
+    prompt = """Convert this robot command into a clear, natural-sounding announcement for text-to-speech.
+Make it sound like a robot is announcing what it's about to do.
+Keep it short and clear. Use present continuous tense (e.g., "Moving forward", "Turning right").
+If there are numbers, convert small ones to words (1->one, 2->two, etc.) for better speech.
+Translate to English if the command is in another language.
+Only return the formatted announcement, nothing else.
+
+Examples:
+- "move forward 1 meter" -> "Moving forward one meter"
+- "gira 90 grados a la derecha" -> "Turning right ninety degrees"
+- "avanza hacia adelante" -> "Moving forward"
+- "stop" -> "Stopping"
+
+Command: {}""".format(command)
+    
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "You are a text formatter for robot voice announcements. Convert commands to clear, natural speech."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3,
+        "max_tokens": 50
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            if 'choices' in result and len(result['choices']) > 0:
+                formatted = result['choices'][0]['message']['content'].strip()
+                # Remove quotes if present
+                formatted = formatted.strip('"').strip("'")
+                return formatted
+    except:
+        pass  # If formatting fails, return original
+    
+    # Fallback: simple formatting
+    command_lower = command.lower().strip()
+    replacements = {
+        'move forward': 'Moving forward',
+        'go forward': 'Going forward',
+        'avanza': 'Moving forward',
+        'advance': 'Advancing',
+        'move backward': 'Moving backward',
+        'go back': 'Going back',
+        'retrocede': 'Moving backward',
+        'reverse': 'Reversing',
+        'turn left': 'Turning left',
+        'gira a la izquierda': 'Turning left',
+        'turn right': 'Turning right',
+        'gira a la derecha': 'Turning right',
+        'rotate': 'Rotating',
+        'stop': 'Stopping',
+        'para': 'Stopping',
+    }
+    
+    formatted = command
+    for pattern, replacement in replacements.items():
+        if pattern in command_lower:
+            formatted = formatted.replace(pattern, replacement)
+            break
+    
+    return formatted
+
 def speak(text):
     """Speak the given text using TTS (non-blocking)"""
     if not TTS_AVAILABLE:
         return  # TTS not available, skip voice announcement
+    
+    # Format command for clearer speech
+    formatted_text = format_command_for_speech(text)
     
     def _speak():
         with tts_lock:
             engine = init_tts()
             if engine is not None:
                 try:
-                    engine.say(text)
+                    engine.say(formatted_text)
                     engine.runAndWait()
                 except Exception as e:
                     print("TTS Error: {}".format(e))
