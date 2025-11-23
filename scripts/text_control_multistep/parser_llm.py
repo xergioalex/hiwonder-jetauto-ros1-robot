@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 def load_prompt():
-    with open(os.path.join(os.path.dirname(__file__), "prompts", "multi_step_parser.txt"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "prompts", "multi_step_parser.txt"), "r", encoding='utf-8') as f:
         return f.read()
 
 def split_into_steps(text):

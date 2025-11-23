@@ -11,7 +11,7 @@ from parser_llm import split_into_steps
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 def load_system_prompt():
-    with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "prompts", "system.txt"), "r", encoding='utf-8') as f:
         return f.read()
 
 def ask_llm_for_twist(command, system_prompt):
