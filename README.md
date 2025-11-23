@@ -1,224 +1,188 @@
-# JetAuto ROS1 Robot (Hiwonder) – Quick Start Guide
+# Hiwonder JetAuto ROS1 Robot
 
-This repository documents the setup, environment configuration, and basic operation workflow for the **Hiwonder JetAuto** robot running **ROS1 Melodic** on **Jetson Orin/Nano**.
+Open-source repository for controlling and operating the **Hiwonder JetAuto 4WD robot** using **ROS1 Melodic** on **Jetson Orin Nano**.
 
-It summarizes the core steps we validated, common fixes, and scripts used to bring the robot to a fully working state.
+This project includes complete system configuration, control scripts, SLAM, mapping, and natural language control using OpenAI.
 
----
+## 🤖 Robot Overview
 
-## 1. System Overview
+**Hardware:**
+- **Robot:** Hiwonder JetAuto 4WD
+- **SBC:** Jetson Orin Nano
+- **OS:** Ubuntu 18.04 (JetPack)
+- **ROS:** ROS1 Melodic
 
-**Robot:** Hiwonder JetAuto 4WD Mobile Robot
-**OS:** Ubuntu 18.04.6 LTS (Jetson)
-**ROS:** ROS1 Melodic
 **Sensors:**
+- RPLIDAR A1 (LiDAR)
+- Astra Pro Plus RGB-D camera
+- IMU
+- Motor encoders
 
-* RPLIDAR A1 (LiDAR)
-* Astra Pro Plus (RGB-D camera)
-* IMU
-* Motor Encoders
+## 📁 Project Structure
 
-**Key ROS Packages:**
+```
+hiwonder-jetauto-ros1-robot/
+├── JETAUTO_GUIDE.md          # Complete technical guide
+├── README.md                 # This file
+├── CLAUDE.md                 # Documentation for AI assistants
+├── .cursorrules              # Development rules for Cursor
+└── scripts/
+    └── text_control_multistep/
+        ├── controller_llm.py  # Controller with OpenAI
+        ├── parser_llm.py      # Multi-step command parser
+        ├── requirements.txt   # Python dependencies
+        ├── README.md          # Module documentation
+        └── prompts/          # OpenAI prompts
+```
 
-* `jetauto_bringup`
-* `jetauto_driver`
-* `jetauto_slam`
-* `jetauto_navigation`
-* `rplidar_ros`
-* `orbbec_camera`
-* `robot_localization`
+## 🚀 Quick Start
 
----
+### 1. ROS Environment Setup
 
-## 2. Fixing the Environment (ROS Setup)
-
-JetAuto images contain several custom startup scripts. To avoid issues, we standardized the ROS environment by using the user shell (`.zshrc` or `.zlogin`).
-
-### Final ROS Environment
+Add to `~/.zshrc` or `~/.bashrc`:
 
 ```bash
 # Load ROS
 source /opt/ros/melodic/setup.bash
 source $HOME/jetauto_ws/devel/setup.bash
 
-# Always use local master
+# ROS Master configuration
 export ROS_MASTER_URI="http://localhost:11311"
 export ROS_HOSTNAME="localhost"
 ```
 
-This ensures the SSH shell always connects to the running ROS master on the robot.
-
----
-
-## 3. Running the Robot
-
-### Check active nodes
-
-```bash
-rosnode list
-```
-
-### Teleoperation (Keyboard Control)
-
-Install once:
-
-```bash
-sudo apt install ros-melodic-teleop-twist-keyboard
-```
-
-Run teleop:
-
-```bash
-rosrun teleop_twist_keyboard teleop_twist_keyboard.py
-```
-
-Controls:
-
-```
-i = forward
-, = backward
-j = turn left
-l = turn right
-k = stop
-```
-
----
-
-## 4. Basic Python Scripts
-
-JetAuto includes custom motion scripts under `~/scripts/`.
-
-Example:
-
-```bash
-python3 ~/scripts/move_forward_50cm.py
-```
-
-These scripts publish to `/cmd_vel` after bringup is active.
-
----
-
-## 5. Battery Status
-
-JetAuto publishes battery voltage on:
-
-```bash
-/ros_robot_controller/battery
-```
-
-Check real‑time value:
-
-```bash
-rostopic echo /ros_robot_controller/battery
-```
-
-Values are in **millivolts (mV)**. Example:
-
-```
-11310 → ~11.31 V (≈35–40%)
-```
-
-Battery reference:
-
-| Voltage  | Meaning                     |
-| -------- | --------------------------- |
-| 12.6 V   | Full                        |
-| 12.0 V   | ~70%                        |
-| 11.5 V   | ~50%                        |
-| 11.0 V   | Low – recharge soon         |
-| < 10.8 V | Critical (LiPo damage risk) |
-
----
-
-## 6. SLAM (Mapping)
-
-JetAuto provides SLAM launch files under:
-
-```bash
-roscd jetauto_slam
-ls launch
-```
-
-Expected files:
-
-* `slam.launch`
-* `rviz_slam.launch`
-
-### Start SLAM
-
-```bash
-roslaunch jetauto_slam slam.launch
-```
-
-### Start RViz for viewing
-
-```bash
-roslaunch jetauto_slam rviz_slam.launch
-```
-
-### Save Generated Map
-
-```bash
-mkdir -p ~/maps
-rosrun map_server map_saver -f ~/maps/jetauto_map
-```
-
-This produces:
-
-* `jetauto_map.pgm`
-* `jetauto_map.yaml`
-
----
-
-## 7. Launch Bringup (if not running automatically)
+### 2. Start the Robot
 
 ```bash
 roslaunch jetauto_bringup bringup.launch
 ```
 
-This starts:
+### 3. Keyboard Control
 
-* Motor controller
-* Odometry
-* IMU filter
-* LiDAR driver
-* Camera driver
-* Base TF tree
+```bash
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+```
 
----
+### 4. Text Control (OpenAI)
 
-## 8. Troubleshooting
+See complete documentation in [`scripts/text_control_multistep/README.md`](scripts/text_control_multistep/README.md)
 
-### ROS Master not reachable
+```bash
+cd scripts/text_control_multistep
+pip install -r requirements.txt
+# Create .env with OPENAI_API_KEY
+python controller_llm.py
+```
 
+## 📚 Documentation
+
+- **[JETAUTO_GUIDE.md](JETAUTO_GUIDE.md)** - Complete technical guide:
+  - System configuration
+  - LiDAR configuration
+  - SLAM and mapping
+  - Troubleshooting
+  - Battery status
+  - Teleoperation
+
+- **[scripts/text_control_multistep/README.md](scripts/text_control_multistep/README.md)** - Natural language control:
+  - Installation and configuration
+  - Using OpenAI for commands
+  - Examples in English and Spanish
+
+## 🔧 Main Features
+
+### Robust Control
+- Keyboard teleoperation
+- Predefined movement scripts
+- Natural language control (English/Spanish)
+
+### SLAM and Navigation
+- Mapping with gmapping
+- Localization with AMCL
+- Autonomous navigation
+
+### AI Integration
+- Text command control using OpenAI GPT
+- Multi-step command parsing
+- Automatic conversion to ROS commands
+
+## 🛠️ Main ROS Packages
+
+- `jetauto_bringup` - System initialization
+- `jetauto_driver` - Hardware drivers
+- `jetauto_slam` - SLAM and mapping
+- `jetauto_navigation` - Autonomous navigation
+- `rplidar_ros` - LiDAR driver
+- `orbbec_camera` - Astra camera driver
+- `robot_localization` - Sensor fusion
+
+## 📋 Requirements
+
+- **ROS1 Melodic** installed and configured
+- **Python 3.6+**
+- **OpenAI API Key** (for text control)
+- **Jetson Orin Nano** with Ubuntu 18.04
+- **ROS Workspace:** `~/jetauto_ws`
+
+## 🔍 Troubleshooting
+
+### ROS Master not accessible
 ```bash
 export ROS_MASTER_URI=http://localhost:11311
 export ROS_HOSTNAME=localhost
 ```
 
-### Kill broken ROS processes
-
+### Blocked ROS processes
 ```bash
 killall -9 roscore rosmaster roslaunch
 ```
 
-### Check port usage
+### LiDAR with no data
+- Check USB port (`/dev/ttyUSB1`)
+- Check baudrate (115200)
+- Check that no other process is using the port
 
+For more details, see [JETAUTO_GUIDE.md](JETAUTO_GUIDE.md).
+
+## 📝 Battery Status
+
+Monitor battery:
 ```bash
-sudo lsof -i:11311
+rostopic echo /ros_robot_controller/battery
 ```
 
+Voltage reference:
+- **12.6 V** - Full
+- **12.0 V** - ~70%
+- **11.5 V** - ~50%
+- **11.0 V** - Low (recharge soon)
+- **<10.8 V** - Critical
+
+## 🤝 Contributing
+
+This is an open-source project. Contributions are welcome:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 🔗 References
+
+- [Hiwonder JetAuto Documentation](https://www.hiwonder.com/)
+- [ROS Melodic Documentation](http://wiki.ros.org/melodic)
+- [OpenAI API Documentation](https://platform.openai.com/docs)
+
+## 📧 Contact
+
+For questions or support, open an issue in the repository.
+
 ---
 
-## 9. Next Steps
+**Note:** This project is under active development. Documentation is updated regularly.
 
-* Autonomous navigation using saved map
-* Object tracking with Astra camera
-* Web control interface via rosbridge
-* Multi-robot JetAuto configuration
-
----
-
-## 10. License
-
-MIT or specify your preferred license.

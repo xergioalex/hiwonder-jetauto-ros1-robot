@@ -1,0 +1,244 @@
+# Cursor Rules for Hiwonder JetAuto ROS1 Robot Project
+
+## ⚠️ CRITICAL: Language Requirement
+
+**ALL code, documentation, comments, variable names, function names, and any text in this project MUST be written in ENGLISH ONLY.**
+
+- Code comments must be in English
+- Documentation must be in English
+- Variable and function names must be in English
+- Error messages must be in English
+- README files must be in English
+- Code docstrings must be in English
+- Commit messages should be in English
+
+**Exception:** User-facing prompts and system prompts that support multiple languages (English/Spanish) for robot commands are acceptable, but all code and documentation must remain in English.
+
+## Project Context
+This is a ROS1 (Melodic) robotics project for controlling a Hiwonder JetAuto 4WD robot on Jetson Orin Nano with Ubuntu 18.04. The project includes ROS integration, SLAM capabilities, and OpenAI-powered natural language control.
+
+## Technology Stack
+- **ROS1 Melodic** - Robot Operating System
+- **Python 3.6+** - Primary language
+- **OpenAI API** - Natural language processing
+- **Jetson Orin Nano** - Hardware platform
+- **Ubuntu 18.04** - Operating system
+
+## Code Style & Conventions
+
+### Python
+- Use Python 3.6+ syntax
+- Follow PEP 8 style guidelines
+- **Use descriptive variable names in English**
+- **Add docstrings for functions and classes in English**
+- Handle exceptions gracefully
+
+### ROS Integration
+- Always initialize ROS node with `rospy.init_node()`
+- Use proper ROS message types (`geometry_msgs/Twist`, etc.)
+- Follow ROS topic naming conventions
+- Check ROS master is running before publishing
+- Use relative paths with `os.path.dirname(__file__)`
+
+### File Paths
+- Always use `os.path.join()` for path construction
+- Use `os.path.dirname(__file__)` for relative paths
+- Never use hardcoded absolute paths
+- Store prompts in `prompts/` subdirectory
+
+## Security & Secrets
+
+### API Keys
+- **NEVER** commit API keys or secrets to git
+- Store API keys in `.env` files (already in `.gitignore`)
+- Use `python-dotenv` to load environment variables
+- Document required environment variables in README
+
+### Environment Variables
+- Load from `.env` file using `load_dotenv()`
+- Use `os.getenv()` to access variables
+- Provide `.env.example` as template (if not blocked)
+- Document all required variables
+
+## OpenAI Integration
+
+### Best Practices
+- Use `openai.OpenAI()` client (v1.0.0+ API)
+- Handle API errors gracefully
+- Validate JSON responses before parsing
+- Use appropriate models (`gpt-4o-mini` for cost efficiency)
+- Support both English and Spanish
+
+### Model Selection
+- Default: `gpt-4o-mini` (cost-effective)
+- Alternatives: `gpt-4o`, `gpt-3.5-turbo`
+- Document model choice in code comments
+- Allow easy model switching
+
+### Error Handling
+- Return safe defaults on API failures
+- Log errors for debugging
+- Don't crash on invalid responses
+- Provide fallback behavior
+
+## Robot Movement Constraints
+
+### Movement Limitations
+- **2D ground robot** - No vertical movement
+- **Only use:**
+  - `linear.x` - Forward/backward
+  - `angular.z` - Rotation
+- **Always set to 0:**
+  - `linear.y`, `linear.z`
+  - `angular.x`, `angular.y`
+
+### Command Execution
+- Commands execute for 2 seconds
+- Robot stops between multi-step commands
+- Publish zero-velocity Twist to stop
+- Use `rospy.Rate()` for timing
+
+## File Organization
+
+### Scripts Structure
+```
+scripts/
+  └── [feature_name]/
+      ├── main_script.py
+      ├── requirements.txt
+      ├── README.md
+      ├── .env (gitignored)
+      └── prompts/ (if using LLM)
+```
+
+### Dependencies
+- Add all Python dependencies to `requirements.txt`
+- Include version numbers when critical
+- Don't include ROS packages (installed via apt)
+- Document installation in README
+
+## Documentation Standards
+
+### README Files
+- **MUST be written in English**
+- Include installation instructions
+- Provide usage examples
+- Document requirements
+- Add troubleshooting section
+- Include both English and Spanish examples for user commands (if applicable)
+
+### Code Comments
+- **MUST be in English**
+- Explain complex logic
+- Document ROS topic names
+- Note hardware-specific details
+- Include usage examples in docstrings
+
+## Testing & Debugging
+
+### ROS Testing
+- Always verify ROS master is running
+- Check topics with `rostopic list` and `rostopic echo`
+- Test with actual robot or simulation
+- Verify message types match
+
+### OpenAI Testing
+- Test with both English and Spanish
+- Verify JSON parsing works
+- Test error cases (invalid API key, network issues)
+- Check response format matches expectations
+
+## Common Patterns
+
+### Loading Prompts
+```python
+def load_prompt():
+    with open(os.path.join(os.path.dirname(__file__), "prompts", "file.txt"), "r") as f:
+        return f.read()
+```
+
+### OpenAI Client
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+```
+
+### ROS Publisher
+```python
+import rospy
+from geometry_msgs.msg import Twist
+
+rospy.init_node('node_name')
+pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+```
+
+## Language Support
+- Support both **English and Spanish** for user-facing features
+- Test commands in both languages
+- Document examples in both languages
+
+## Git Practices
+- Never commit `.env` files
+- Keep `.gitignore` updated
+- Use meaningful commit messages
+- Document breaking changes
+
+## When Adding New Features
+
+1. **Check existing patterns** - Follow established code structure
+2. **Update documentation** - Add to relevant README files
+3. **Add dependencies** - Update `requirements.txt`
+4. **Test thoroughly** - Test with ROS and OpenAI
+5. **Handle errors** - Provide graceful fallbacks
+6. **Support languages** - Include English and Spanish examples
+
+## ROS-Specific Rules
+
+### Topics
+- Use standard topic names (`/cmd_vel`, `/scan`, etc.)
+- Document custom topics
+- Check topic exists before subscribing
+
+### Nodes
+- Use descriptive node names
+- Initialize properly with `rospy.init_node()`
+- Handle shutdown gracefully
+
+### Messages
+- Use standard ROS message types
+- Validate message data before publishing
+- Follow message field conventions
+
+## OpenAI-Specific Rules
+
+### Prompts
+- Store prompts in `prompts/` directory
+- Use clear, specific instructions
+- Enforce JSON output format when needed
+- Test prompts with actual API
+
+### Responses
+- Always validate JSON responses
+- Handle malformed responses gracefully
+- Log errors for debugging
+- Return safe defaults on failure
+
+## Error Handling Philosophy
+- **Fail gracefully** - Don't crash the robot
+- **Log errors** - Help with debugging
+- **Provide defaults** - Safe fallback behavior
+- **Inform user** - Clear error messages
+
+## Performance Considerations
+- Use efficient ROS rates (1-10 Hz typically)
+- Minimize API calls (cache when possible)
+- Don't block ROS callbacks
+- Use appropriate sleep times
+
+---
+
+**Remember:** This is a robotics project. Safety and reliability are paramount. Always test changes thoroughly before deploying to the robot.
+
