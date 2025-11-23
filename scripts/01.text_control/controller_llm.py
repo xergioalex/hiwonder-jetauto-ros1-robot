@@ -4,8 +4,21 @@ import requests
 import json
 import time
 import os
+import signal
+import sys
 from dotenv import load_dotenv
 from parser_llm import split_into_steps
+
+# Global flag for clean exit
+should_exit = False
+
+def signal_handler(sig, frame):
+    """Handle Ctrl+C gracefully"""
+    global should_exit
+    print("\n\nCtrl+C detected - Stopping controller...")
+    print("Goodbye!")
+    should_exit = True
+    sys.exit(0)
 
 # Load environment variables from .env file in repo root
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -169,6 +182,9 @@ def execute_sequence(commands):
         # time.sleep(0.1)  # Optional pause between commands (commented for instant transitions)
 
 if __name__ == "__main__":
+    # Register signal handler for Ctrl+C
+    signal.signal(signal.SIGINT, signal_handler)
+
     print("=" * 70)
     print("Robot Text Controller - Continuous Mode")
     print("=" * 70)
@@ -179,9 +195,13 @@ if __name__ == "__main__":
     print("")
 
     try:
-        while True:
+        while not should_exit:
             # Get user input
-            user_input = input("Enter command: ").strip()
+            try:
+                user_input = input("Enter command: ").strip()
+            except (KeyboardInterrupt, EOFError):
+                print("\n\nInterrupted - Exiting...")
+                break
 
             # Check for exit commands
             if user_input.lower() in ['exit', 'quit', 'salir', 'terminar', 'cerrar']:
@@ -198,7 +218,11 @@ if __name__ == "__main__":
             print("Steps: {}".format(steps))
 
             # Execute sequence
-            execute_sequence(steps)
+            try:
+                execute_sequence(steps)
+            except (KeyboardInterrupt, rospy.ROSInterruptException):
+                print("\n\nInterrupted during execution - Stopping...")
+                break
 
             print("\nSequence completed!")
             print("-" * 70)
@@ -211,3 +235,6 @@ if __name__ == "__main__":
         print("\nError: {}".format(e))
         import traceback
         traceback.print_exc()
+    finally:
+        print("\nShutting down...")
+        sys.exit(0)
