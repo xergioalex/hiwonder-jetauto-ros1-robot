@@ -170,7 +170,7 @@ def execute_sequence(commands):
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("🤖 Robot Text Controller - Continuous Mode")
+    print("Robot Text Controller - Continuous Mode")
     print("=" * 70)
     print("Enter commands in English or Spanish")
     print("Type 'exit', 'quit', or 'salir' to stop")
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
             # Check for exit commands
             if user_input.lower() in ['exit', 'quit', 'salir', 'terminar', 'cerrar']:
-                print("\n👋 Exiting robot controller...")
+                print("\nExiting robot controller...")
                 break
 
             # Skip empty input
@@ -193,21 +193,21 @@ if __name__ == "__main__":
                 continue
 
             # Process command
-            print("\n📝 Processing: {}".format(user_input))
+            print("\nProcessing: {}".format(user_input))
             steps = split_into_steps(user_input)
-            print("📋 Steps: {}".format(steps))
+            print("Steps: {}".format(steps))
 
             # Execute sequence
             execute_sequence(steps)
 
-            print("\n✅ Sequence completed!")
+            print("\nSequence completed!")
             print("-" * 70)
             print("")
 
     except KeyboardInterrupt:
-        print("\n\n🛑 Ctrl+C detected - Stopping controller...")
-        print("Goodbye! 👋")
+        print("\n\nCtrl+C detected - Stopping controller...")
+        print("Goodbye!")
     except Exception as e:
-        print("\n❌ Error: {}".format(e))
+        print("\nError: {}".format(e))
         import traceback
         traceback.print_exc()

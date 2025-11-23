@@ -57,7 +57,7 @@ def emergency_stop():
         stop_msg.angular.z = 0.0
 
         print("=" * 60)
-        print("🛑 EMERGENCY STOP - Publishing STOP commands continuously")
+        print("EMERGENCY STOP - Publishing STOP commands continuously")
         print("=" * 60)
         print("The robot is now stopped and will STAY stopped.")
         print("This script will keep publishing STOP commands at 10Hz.")
