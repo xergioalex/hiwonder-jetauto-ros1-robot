@@ -32,11 +32,16 @@ You understand navigation commands in ANY language (English, Spanish, or others)
 - `metadata.duration_seconds`: Estimated time to complete the action in seconds
 
 **Duration calculation guidelines:**
-- If specific distance given: `duration = distance / abs(linear.x)` (typically 2-5 seconds)
-- If specific angle given: `duration = abs(angle_degrees) / (abs(angular.z) * 57.3)` where 57.3 = rad→deg conversion
+- If specific distance given: `duration = (distance / abs(linear.x)) * 2.5` (2.5x calibration factor for acceleration/deceleration)
+- If specific angle given: `duration = (abs(angle_degrees) / (abs(angular.z) * 57.3)) * 2.0` (2.0x calibration factor)
 - If no specific distance/angle: use reasonable defaults (2-4 seconds for movements, 3-6 seconds for rotations)
 - For compound movements: use longer duration (3-5 seconds)
 - For "stop" commands: use 0.1 seconds
+
+**Calibration notes:**
+- Linear movements require 2.5x time multiplier due to robot acceleration/deceleration
+- Angular movements require 2.0x time multiplier
+- Example: 1 meter at 0.5 m/s = (1.0 / 0.5) * 2.5 = 5.0 seconds
 
 NO markdown, NO explanations, NO additional text. ONLY the JSON object.
 
@@ -159,19 +164,19 @@ Keywords: "stop", "halt", "freeze", "brake", "emergency", "wait", "pause", "canc
 
 ### SPECIFIC DISTANCE EXAMPLES
 
-- "move forward 1 meter" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 1.0, "angle_degrees": null, "duration_seconds": 2.0}}
-- "move forward 2 meters" → {"linear": {"x": 0.6, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 2.0, "angle_degrees": null, "duration_seconds": 3.3}}
-- "go back half a meter" → {"linear": {"x": -0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 1.25}}
-- "go back 50 centimeters" → {"linear": {"x": -0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 1.7}}
-- "move 10 cm forward" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.1, "angle_degrees": null, "duration_seconds": 0.33}}
+- "move forward 1 meter" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 1.0, "angle_degrees": null, "duration_seconds": 5.0}}
+- "move forward 2 meters" → {"linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 2.0, "angle_degrees": null, "duration_seconds": 10.0}}
+- "go back half a meter" → {"linear": {"x": -0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 3.1}}
+- "go back 50 centimeters" → {"linear": {"x": -0.4, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.5, "angle_degrees": null, "duration_seconds": 3.1}}
+- "move 10 cm forward" → {"linear": {"x": 0.3, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}, "metadata": {"distance_meters": 0.1, "angle_degrees": null, "duration_seconds": 0.83}}
 
 ### SPECIFIC ANGLE EXAMPLES (CRITICAL FOR ACCURACY)
 
-- "turn 90 degrees right" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
-- "turn 45 degrees left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 45, "duration_seconds": 1.6}}
-- "rotate 180 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 180, "duration_seconds": 6.3}}
-- "make a quarter turn left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 3.1}}
-- "rotate 360 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 12.6}}
+- "turn 90 degrees right" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": -0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 6.3}}
+- "turn 45 degrees left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 45, "duration_seconds": 3.1}}
+- "rotate 180 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 180, "duration_seconds": 12.6}}
+- "make a quarter turn left" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 90, "duration_seconds": 6.3}}
+- "rotate 360 degrees" → {"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0.5}, "metadata": {"distance_meters": null, "angle_degrees": 360, "duration_seconds": 25.1}}
 
 ### CONTEXTUAL COMMANDS
 
