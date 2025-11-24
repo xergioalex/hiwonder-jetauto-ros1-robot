@@ -314,10 +314,10 @@ def validate_command(command):
     prompt = """Determine if this is a valid robot movement command. A valid command is one that instructs a mobile robot to move, rotate, or navigate (e.g., "move forward", "turn left", "go back 2 meters", "rotate 90 degrees").
 
 If the command is NOT a movement command (e.g., questions, general knowledge, non-robot actions), respond with JSON:
-{"valid": false, "message": "I didn't understand that command. I can only execute movement instructions. Try commands like: move forward, turn left, go back, rotate 90 degrees, advance 1 meter, etc."}
+{{"valid": false, "message": "I didn't understand that command. I can only execute movement instructions. Try commands like: move forward, turn left, go back, rotate 90 degrees, advance 1 meter, etc."}}
 
 If the command IS a valid movement command, respond with JSON:
-{"valid": true}
+{{"valid": true}}
 
 Command: {}""".format(command)
     

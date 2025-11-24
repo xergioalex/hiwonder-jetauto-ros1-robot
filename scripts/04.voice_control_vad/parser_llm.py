@@ -80,16 +80,24 @@ def translate_to_english(text):
     if not api_key:
         return text  # Return original if no API key
     
-    # Simple check: if text contains common non-English words, translate it
-    # This helps avoid unnecessary API calls for English commands
-    english_indicators = ['move', 'go', 'turn', 'rotate', 'forward', 'backward', 'left', 'right', 
-                         'meter', 'meters', 'degree', 'degrees', 'then', 'and', 'stop']
+    # Check for Spanish indicators - if found, always translate
+    spanish_indicators = ['avanza', 'retrocede', 'gira', 'gire', 'luego', 'después', 
+                         'metros', 'centímetros', 'grados', 'derecha', 'izquierda',
+                         'adelante', 'atrás', 'para', 'detente', 'espera']
     text_lower = text.lower()
-    has_english = any(indicator in text_lower for indicator in english_indicators)
+    has_spanish = any(indicator in text_lower for indicator in spanish_indicators)
     
-    # If it looks like English already, skip translation
-    if has_english and len([w for w in text_lower.split() if w in english_indicators]) >= 2:
-        return text  # Likely already in English
+    # If it has Spanish indicators, always translate
+    if has_spanish:
+        # Force translation
+        pass
+    else:
+        # Check if it's clearly English - if so, skip translation to save API calls
+        english_indicators = ['move', 'go', 'turn', 'rotate', 'forward', 'backward', 'left', 'right', 
+                             'meter', 'meters', 'degree', 'degrees', 'then', 'and', 'stop']
+        has_english = any(indicator in text_lower for indicator in english_indicators)
+        if has_english and len([w for w in text_lower.split() if w in english_indicators]) >= 2:
+            return text  # Likely already in English
     
     url = OPENAI_API_BASE_URL
     headers = {
