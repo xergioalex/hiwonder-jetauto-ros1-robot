@@ -194,7 +194,12 @@ def split_into_steps(text):
         content = extract_text_from_responses(result)
         if not content:
             print("Error: Empty content from Responses API")
+            print("Debug: Full response structure: {}".format(json.dumps(result, indent=2)[:1000]))
             return []
+        
+        # Ensure content is a string
+        if not isinstance(content, str):
+            content = str(content)
         
         safe_print("API Response: {}".format(content))
         
