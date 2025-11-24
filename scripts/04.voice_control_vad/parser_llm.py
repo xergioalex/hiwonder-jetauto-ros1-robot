@@ -199,6 +199,14 @@ def split_into_steps(text):
         result = response.json()
         print("Debug: Response received successfully")
         
+        # Debug: print raw response structure (first 500 chars)
+        print("Debug: Raw response keys: {}".format(list(result.keys()) if isinstance(result, dict) else "Not a dict"))
+        if isinstance(result, dict) and "output" in result:
+            print("Debug: Output type: {}, length: {}".format(
+                type(result["output"]), 
+                len(result["output"]) if isinstance(result["output"], list) else "N/A"
+            ))
+        
         content = extract_text_from_responses(result)
         if not content:
             print("Error: Empty content from Responses API")
