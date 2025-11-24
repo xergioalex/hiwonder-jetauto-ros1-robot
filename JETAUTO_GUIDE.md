@@ -30,7 +30,88 @@ It includes all fixes required for stable robot control, LiDAR configuration, SL
 
 ---
 
-## 2. Environment Fix (Standard ROS Setup)
+## 2. System Architecture: Host OS vs Docker UI
+
+⚠️ **CRITICAL**: The JetAuto robot runs **two different Linux environments**. Understanding this distinction is essential to avoid confusion.
+
+### 2.1. SSH Terminal → Real Host OS
+
+When you connect via SSH:
+
+```bash
+ssh jetauto@jetauto.local
+```
+
+You enter the **real Jetson host operating system** at `/home/jetauto`.
+
+**Characteristics of the Host OS:**
+- **User**: `jetauto`
+- **Full hardware access**: `/dev/*` devices (LiDAR, ttyUSB1, camera, motors)
+- **Real ROS workspace**: `~/jetauto_ws` (actual filesystem)
+- **Docker engine**: Available here (`docker` command works)
+- **ROS runs here**: All ROS nodes execute on the host, not in containers
+- **System services**: `systemctl` commands work here
+- **Network configuration**: WiFi, network settings live here
+- **Hardware drivers**: LiDAR, camera, IMU, motor controllers accessible
+
+**✅ This is the environment where all ROS development must happen.**
+
+### 2.2. Graphical UI Terminal → Docker Container
+
+When you open the JetAuto UI on the built-in screen and start a terminal, you are **NOT** in the host OS.
+
+You are inside a **Docker container**:
+
+- **User**: `ubuntu`
+- **Isolated filesystem**: Only `/home/ubuntu` (separate from host)
+- **Not the real workspace**: The JetAuto workspace you see here is **not** the host workspace
+- **No Docker**: Docker is not available inside the container
+- **No hardware access**: Devices (ttyUSB, LiDAR, camera) are **not** accessible
+- **Network isolation**: NetworkManager configuration not shared with host
+- **Missing tools**: Some commands/tools may appear missing
+
+**❌ This container is meant only for the JetAuto UI apps — NOT for ROS development.**
+
+### 2.3. Why This Matters
+
+Because of the dual-environment setup:
+
+| Issue | Host OS (SSH) | Docker UI |
+|-------|----------------|-----------|
+| **Files created** | Visible in `/home/jetauto` | Only in `/home/ubuntu` (isolated) |
+| **Docker commands** | ✅ Available | ❌ Not available |
+| **Hardware access** | ✅ Full access | ❌ No access |
+| **ROS launch files** | ✅ Must run here | ❌ Will not work |
+| **LiDAR/Camera** | ✅ Accessible | ❌ Not accessible |
+| **System config** | ✅ Real configuration | ❌ Isolated environment |
+
+**Key Rules:**
+- ❌ Files created in UI terminal do **not** appear in SSH
+- ❌ Docker cannot be used inside the UI terminal
+- ❌ LiDAR, camera, and servo drivers do **not** work inside Docker
+- ✅ ROS launch files must **always** be run from SSH
+- ✅ Real system configuration is only visible via SSH
+
+### 2.4. Best Practices
+
+**Always use SSH for:**
+- ROS development and debugging
+- Running `roslaunch` commands
+- Accessing hardware (LiDAR, camera, motors)
+- Building ROS packages
+- System configuration
+- SLAM and navigation
+
+**UI Terminal is only for:**
+- Touchscreen interface apps
+- Visual feedback (if needed)
+- **NOT for ROS development**
+
+> **⚠️ IMPORTANT**: Always use SSH when building, running, or debugging ROS on JetAuto. The UI terminal is only for the touchscreen interface.
+
+---
+
+## 3. Environment Fix (Standard ROS Setup)
 
 JetAuto images include mixed login shells. To avoid inconsistent ROS behavior, the environment was standardized.
 
@@ -55,7 +136,7 @@ rosversion -d
 
 ---
 
-## 3. Launching the Robot
+## 4. Launching the Robot
 
 Start the full robot stack (motors, IMU, encoders, TF tree):
 
@@ -71,7 +152,7 @@ rosnode list
 
 ---
 
-## 4. Teleoperation (Keyboard Control)
+## 5. Teleoperation (Keyboard Control)
 
 Install (once):
 
@@ -97,7 +178,7 @@ k = stop
 
 ---
 
-## 5. Motion Scripts
+## 6. Motion Scripts
 
 JetAuto includes custom scripts in `~/scripts/`.
 
@@ -111,7 +192,7 @@ These publish to `/cmd_vel`.
 
 ---
 
-## 6. Battery Status
+## 7. Battery Status
 
 Battery topic:
 
@@ -137,7 +218,7 @@ Voltage reference:
 
 ---
 
-## 7. LiDAR (RPLIDAR A1) – Working Configuration
+## 8. LiDAR (RPLIDAR A1) – Working Configuration
 
 This section documents the actual fix performed to get the RPLIDAR working reliably.
 
@@ -208,7 +289,7 @@ If `/scan` outputs ranges → LiDAR is fully working.
 
 ---
 
-## 8. SLAM (Mapping)
+## 9. SLAM (Mapping)
 
 ### 8.1. Start bringup
 
@@ -270,7 +351,7 @@ Creates:
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 ### ROS master not reachable
 
@@ -300,7 +381,7 @@ sudo lsof /dev/ttyUSB1
 
 ---
 
-## 10. Next Steps
+## 11. Next Steps
 
 - Autonomous navigation with `move_base`  
 - Using saved maps for localization  
@@ -310,6 +391,6 @@ sudo lsof /dev/ttyUSB1
 
 ---
 
-## 11. License
+## 12. License
 
 MIT License or your preferred license.
