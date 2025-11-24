@@ -138,6 +138,7 @@ def safe_print(message):
 # Initialize TTS engine (global to avoid reinitializing on each call)
 tts_engine = None
 tts_lock = threading.Lock()
+tts_speaking = False  # Flag to prevent VAD from listening while TTS is speaking
 
 def init_tts():
     """Initialize the TTS engine with proper settings"""
@@ -269,6 +270,7 @@ def translate_to_english_for_speech(text):
 
 def speak(text):
     """Speak the given text using TTS (non-blocking). Always translates to English first."""
+    global tts_speaking
     if not TTS_AVAILABLE:
         return  # TTS not available, skip voice announcement
     
@@ -279,7 +281,9 @@ def speak(text):
     formatted_text = format_command_for_speech(english_text)
     
     def _speak():
+        global tts_speaking
         with tts_lock:
+            tts_speaking = True  # Set flag to prevent VAD from listening
             engine = init_tts()
             if engine is not None:
                 try:
@@ -287,6 +291,7 @@ def speak(text):
                     engine.runAndWait()
                 except Exception as e:
                     print("TTS Error: {}".format(e))
+            tts_speaking = False  # Clear flag when done speaking
 
     # Run TTS in a separate thread to avoid blocking
     thread = threading.Thread(target=_speak)
@@ -606,6 +611,10 @@ def listen_for_utterance_vad():
         if status:
             print("Audio status: {}".format(status))
         
+        # Skip processing if TTS is speaking (prevent feedback loop)
+        if tts_speaking:
+            return
+        
         # Convert to int16 bytes for VAD
         frame_bytes = (indata * 32767).astype(np.int16).tobytes()
         
@@ -646,7 +655,10 @@ def listen_for_utterance_vad():
     
     try:
         safe_print("👂 Listening for voice...")
-        speak("Listening")
+        # Don't speak "Listening" here - it causes feedback loop with VAD
+        
+        # Wait a moment to ensure TTS has finished if it was speaking
+        time.sleep(0.5)
         
         # Open audio input stream
         stream = sd.InputStream(samplerate=VAD_SAMPLE_RATE, 
@@ -700,6 +712,14 @@ def listen_for_utterance_vad():
         # Save audio to WAV file
         sf.write(temp_path, audio_int16, VAD_SAMPLE_RATE)
         duration = len(audio_int16) / VAD_SAMPLE_RATE
+        
+        # Minimum duration threshold to avoid very short captures (likely noise or TTS feedback)
+        MIN_DURATION_SEC = 0.8  # Minimum 0.8 seconds
+        if duration < MIN_DURATION_SEC:
+            safe_print("⚠️  Audio too short ({:.2f}s), likely noise. Ignoring.".format(duration))
+            os.unlink(temp_path)  # Clean up temp file
+            return None
+        
         safe_print("✓ Audio captured: {:.2f} seconds".format(duration))
         
         return temp_path
@@ -829,15 +849,41 @@ if __name__ == "__main__":
                 time.sleep(0.5)
                 continue
             
-            # Transcribe audio
-            speak("Processing")
+            # Transcribe audio (don't speak "Processing" - it causes feedback)
+            # speak("Processing")  # Removed to prevent feedback loop
             transcript = transcribe_audio(audio_file, language_hint="es")
             
             if transcript:
+                # Clean and validate transcript before processing
+                transcript = transcript.strip()
+                
+                # Ignore common non-command words that might be mis-transcribed
+                ignore_words = ['listening', 'processing', 'sabien', 'sabiendo', 'sabien', 
+                               'listening.', 'processing.', 'ok', 'okay', 'yes', 'no']
+                if transcript.lower() in ignore_words or len(transcript) < 3:
+                    safe_print("\n⚠️  Ignoring non-command: {}".format(transcript))
+                    # Wait longer before next listen to avoid feedback
+                    time.sleep(1.0)
+                    continue
+                
+                # Quick validation - check if it looks like a movement command
+                movement_keywords = ['move', 'go', 'turn', 'rotate', 'advance', 'retreat', 
+                                    'forward', 'backward', 'left', 'right', 'stop',
+                                    'avanza', 'retrocede', 'gira', 'adelante', 'atrás']
+                has_movement_keyword = any(keyword in transcript.lower() for keyword in movement_keywords)
+                
+                if not has_movement_keyword:
+                    safe_print("\n⚠️  Transcript doesn't appear to be a movement command: {}".format(transcript))
+                    safe_print("   Ignoring. Please speak a movement command.")
+                    # Wait before next listen
+                    time.sleep(1.0)
+                    continue
+                
                 # Announce recognized command
                 safe_print("\n✓ Recognized: {}".format(transcript))
                 speak("I heard: {}".format(transcript))
-                time.sleep(0.5)
+                # Wait for TTS to finish before processing
+                time.sleep(2.0)  # Longer wait to ensure TTS finishes
                 
                 # Process command
                 safe_print("\nProcessing: {}".format(transcript))
@@ -859,8 +905,9 @@ if __name__ == "__main__":
                 safe_print("\n⚠️  Could not transcribe audio. Continuing to listen...")
                 print("")
             
-            # Small delay before next listening cycle
-            time.sleep(0.3)
+            # Longer delay before next listening cycle to avoid feedback
+            # Wait for any TTS to finish completely
+            time.sleep(2.0)  # Increased from 0.3 to 2.0 seconds
 
     except KeyboardInterrupt:
         print("\n\nCtrl+C detected - Stopping controller...")
