@@ -379,6 +379,20 @@ sudo lsof /dev/ttyUSB1
 - Another process locking the port
 - CH341 USB instability (unplug & replug)
 
+### Confusion between Host OS and Docker UI
+
+**Symptoms:**
+- Files created in UI terminal don't appear in SSH
+- ROS commands fail in UI terminal
+- Hardware devices not accessible in UI terminal
+- Docker commands not found in UI terminal
+
+**Solution:**
+- Always use SSH (`ssh jetauto@jetauto.local`) for ROS development
+- UI terminal is only for touchscreen interface, not for development
+- All ROS work must be done in the host OS at `/home/jetauto`
+- If you created files in UI terminal, they are in `/home/ubuntu` (Docker), not `/home/jetauto` (host)
+
 ---
 
 ## 11. Next Steps
