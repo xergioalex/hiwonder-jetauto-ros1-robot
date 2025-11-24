@@ -471,7 +471,7 @@ def record_audio_push_to_talk():
         print("\nRecording cancelled.")
         return None
     
-    print("🎤 Recording... (Press ENTER again to stop)")
+    safe_print("🎤 Recording... (Press ENTER again to stop)")
     speak("Recording")
     
     # Use callback-based recording with threading
@@ -529,7 +529,7 @@ def record_audio_push_to_talk():
         # Save audio to WAV file
         sf.write(temp_path, audio_data, sample_rate)
         duration = len(audio_data) / sample_rate
-        print("✓ Audio saved to: {}".format(temp_path))
+        safe_print("✓ Audio saved to: {}".format(temp_path))
         print("Recording duration: {:.2f} seconds".format(duration))
         
         return temp_path
@@ -582,7 +582,7 @@ def transcribe_audio(file_path, language_hint="es"):
             
             if response.status_code == 200:
                 transcript = response.text.strip()
-                print("✓ Transcription: {}".format(transcript))
+                safe_print("✓ Transcription: {}".format(transcript))
                 return transcript
             else:
                 print("Error: Transcription failed with status code: {}".format(response.status_code))
@@ -635,7 +635,7 @@ if __name__ == "__main__":
     
     # Check audio availability
     if not AUDIO_AVAILABLE:
-        print("⚠️  Warning: Audio recording is not available.")
+        safe_print("⚠️  Warning: Audio recording is not available.")
         print("   Voice input will be disabled. Text input will still work.")
         print("   Install audio libraries: pip install sounddevice soundfile numpy")
         print("")
@@ -696,17 +696,17 @@ if __name__ == "__main__":
                         print("-" * 70)
                         print("")
                     else:
-                        print("\n⚠️  Could not transcribe audio. Please try again.")
+                        safe_print("\n⚠️  Could not transcribe audio. Please try again.")
                         speak("I didn't understand. Please try again.")
                         print("")
                 else:
-                    print("\n⚠️  Recording failed or was cancelled.")
+                    safe_print("\n⚠️  Recording failed or was cancelled.")
                     print("")
                 continue
             
             # If empty input but audio not available, skip
             if not user_input:
-                print("⚠️  Empty input. Type a command or install audio libraries for voice input.")
+                safe_print("⚠️  Empty input. Type a command or install audio libraries for voice input.")
                 continue
 
             # Process text command

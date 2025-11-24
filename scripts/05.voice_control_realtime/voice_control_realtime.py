@@ -471,14 +471,14 @@ async def send_audio_loop(websocket):
         )
         audio_stream.start()
         
-        print("🎤 Audio stream started, sending to Realtime API...")
+        safe_print("🎤 Audio stream started, sending to Realtime API...")
         
         while not should_exit:
             # Read audio chunk
             audio_chunk, overflowed = audio_stream.read(REALTIME_FRAME_SIZE)
             
             if overflowed:
-                print("⚠️  Audio buffer overflow")
+                safe_print("⚠️  Audio buffer overflow")
             
             # Convert to bytes
             audio_bytes = audio_chunk.tobytes()
@@ -495,7 +495,7 @@ async def send_audio_loop(websocket):
             try:
                 await websocket.send(json.dumps(message))
             except websockets.exceptions.ConnectionClosed:
-                print("⚠️  WebSocket connection closed during audio send")
+                safe_print("⚠️  WebSocket connection closed during audio send")
                 break
             except Exception as e:
                 print("Error sending audio: {}".format(e))
@@ -529,11 +529,11 @@ async def receive_events_loop(websocket):
                 
                 # Handle different event types
                 if event_type == "input_audio_buffer.speech_started":
-                    print("🎤 Speech started")
+                    safe_print("🎤 Speech started")
                     speak("Listening")
                 
                 elif event_type == "input_audio_buffer.speech_stopped":
-                    print("✓ Speech stopped")
+                    safe_print("✓ Speech stopped")
                 
                 elif event_type == "input_audio_buffer.committed":
                     # Partial transcript available
@@ -545,7 +545,7 @@ async def receive_events_loop(websocket):
                     # Final transcript available
                     transcript = event.get("transcript", "")
                     if transcript:
-                        print("\n✓ Final transcript: {}".format(transcript))
+                        safe_print("\n✓ Final transcript: {}".format(transcript))
                         # Put transcript in queue for processing
                         await realtime_transcript_queue.put(transcript)
                 
@@ -555,7 +555,7 @@ async def receive_events_loop(websocket):
                 
                 elif event_type == "session.updated":
                     # Session configuration confirmed
-                    print("✓ Session configured")
+                    safe_print("✓ Session configured")
                 
             except json.JSONDecodeError as e:
                 print("Error parsing WebSocket message: {}".format(e))
@@ -563,7 +563,7 @@ async def receive_events_loop(websocket):
                 print("Error processing event: {}".format(e))
                 
     except websockets.exceptions.ConnectionClosed:
-        print("⚠️  WebSocket connection closed")
+        safe_print("⚠️  WebSocket connection closed")
     except Exception as e:
         print("Error in receive loop: {}".format(e))
         import traceback
@@ -644,7 +644,7 @@ async def connect_realtime_api():
             ) as websocket:
                 realtime_ws = websocket
                 realtime_connected = True
-                print("✓ Connected to Realtime API")
+                safe_print("✓ Connected to Realtime API")
                 
                 # Configure session for transcription
                 session_config = {
@@ -681,7 +681,7 @@ async def connect_realtime_api():
                 if should_exit:
                     break
                 
-                print("⚠️  Connection lost, reconnecting in {} seconds...".format(retry_delay))
+                safe_print("⚠️  Connection lost, reconnecting in {} seconds...".format(retry_delay))
                 await asyncio.sleep(retry_delay)
                 
         except websockets.exceptions.InvalidStatusCode as e:
@@ -730,7 +730,7 @@ if __name__ == "__main__":
     print("Using OpenAI Realtime API for streaming voice recognition")
     print("Speak naturally - the robot will process your commands in real-time")
     print("")
-    print("⚠️  NOTE: This script requires Python 3.9+")
+    safe_print("⚠️  NOTE: This script requires Python 3.9+")
     print("   If running on JetAuto (Python 3.6), consider running on a laptop")
     print("   and sending commands to the robot via ROS topics or HTTP")
     print("")
@@ -740,7 +740,7 @@ if __name__ == "__main__":
 
     # Check Python version
     if sys.version_info < (3, 9):
-        print("⚠️  WARNING: Python 3.9+ required for Realtime API")
+        safe_print("⚠️  WARNING: Python 3.9+ required for Realtime API")
         print("   Current version: {}.{}.{}".format(
             sys.version_info.major,
             sys.version_info.minor,
@@ -760,7 +760,7 @@ if __name__ == "__main__":
     
     # Check audio availability
     if not AUDIO_AVAILABLE:
-        print("⚠️  Error: Audio libraries not available.")
+        safe_print("⚠️  Error: Audio libraries not available.")
         print("   Install with: pip install sounddevice numpy")
         sys.exit(1)
     

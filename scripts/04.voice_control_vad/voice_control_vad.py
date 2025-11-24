@@ -510,7 +510,7 @@ def listen_for_utterance_vad():
                 vad_state.state = RECORDING
                 vad_state.frames = [indata.copy()]
                 vad_state.silence_frames = 0
-                print("🎤 Speech detected, recording...")
+                safe_print("🎤 Speech detected, recording...")
         elif vad_state.state == RECORDING:
             vad_state.frames.append(indata.copy())
             
@@ -521,11 +521,11 @@ def listen_for_utterance_vad():
                 # Check if we've had enough silence to end
                 if vad_state.silence_frames >= VAD_SILENCE_FRAMES:
                     vad_state.state = ENDING
-                    print("✓ Silence detected, ending recording...")
+                    safe_print("✓ Silence detected, ending recording...")
             
             # Safety: check max duration
             if vad_state.frame_count >= vad_state.max_frames:
-                print("⚠️  Maximum duration reached ({} seconds)".format(VAD_MAX_DURATION_SEC))
+                safe_print("⚠️  Maximum duration reached ({} seconds)".format(VAD_MAX_DURATION_SEC))
                 vad_state.state = ENDING
         elif vad_state.state == ENDING:
             # Collect a few more frames for smooth ending
@@ -535,7 +535,7 @@ def listen_for_utterance_vad():
                 vad_state.should_stop = True
     
     try:
-        print("👂 Listening for voice...")
+        safe_print("👂 Listening for voice...")
         speak("Listening")
         
         # Open audio input stream
@@ -562,7 +562,7 @@ def listen_for_utterance_vad():
         stream.close()
         
         if not vad_state.frames:
-            print("⚠️  No audio captured.")
+            safe_print("⚠️  No audio captured.")
             return None
         
         # Concatenate all frames
@@ -576,7 +576,7 @@ def listen_for_utterance_vad():
             audio_data = audio_data[start_index:]
         
         if len(audio_data) == 0:
-            print("⚠️  No audio data after trimming.")
+            safe_print("⚠️  No audio data after trimming.")
             return None
         
         # Convert to int16 for saving
@@ -590,7 +590,7 @@ def listen_for_utterance_vad():
         # Save audio to WAV file
         sf.write(temp_path, audio_int16, VAD_SAMPLE_RATE)
         duration = len(audio_int16) / VAD_SAMPLE_RATE
-        print("✓ Audio captured: {:.2f} seconds".format(duration))
+        safe_print("✓ Audio captured: {:.2f} seconds".format(duration))
         
         return temp_path
         
@@ -637,12 +637,12 @@ def transcribe_audio(file_path, language_hint="es"):
                 'response_format': 'text'
             }
             
-            print("📤 Sending audio for transcription...")
+            safe_print("📤 Sending audio for transcription...")
             response = requests.post(url, headers=headers, files=files, data=data, timeout=30)
             
             if response.status_code == 200:
                 transcript = response.text.strip()
-                print("✓ Transcription: {}".format(transcript))
+                safe_print("✓ Transcription: {}".format(transcript))
                 return transcript
             else:
                 print("Error: Transcription failed with status code: {}".format(response.status_code))
@@ -691,12 +691,12 @@ if __name__ == "__main__":
     
     # Check audio and VAD availability
     if not AUDIO_AVAILABLE:
-        print("⚠️  Error: Audio libraries not available.")
+        safe_print("⚠️  Error: Audio libraries not available.")
         print("   Install with: pip install sounddevice soundfile numpy")
         sys.exit(1)
     
     if not VAD_AVAILABLE:
-        print("⚠️  Error: WebRTC VAD not available.")
+        safe_print("⚠️  Error: WebRTC VAD not available.")
         print("   Install with: pip install webrtcvad-wheels")
         sys.exit(1)
     
@@ -746,7 +746,7 @@ if __name__ == "__main__":
                 print("-" * 70)
                 print("")
             else:
-                print("\n⚠️  Could not transcribe audio. Continuing to listen...")
+                safe_print("\n⚠️  Could not transcribe audio. Continuing to listen...")
                 print("")
             
             # Small delay before next listening cycle
