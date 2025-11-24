@@ -124,6 +124,7 @@ def safe_print(message):
 # Initialize TTS engine (global to avoid reinitializing on each call)
 tts_engine = None
 tts_lock = threading.Lock()
+tts_speaking = False  # Flag to prevent audio capture while TTS is speaking
 
 def init_tts():
     """Initialize the TTS engine with proper settings"""
@@ -255,6 +256,7 @@ def translate_to_english_for_speech(text):
 
 def speak(text):
     """Speak the given text using TTS (non-blocking). Always translates to English first."""
+    global tts_speaking
     if not TTS_AVAILABLE:
         return  # TTS not available, skip voice announcement
     
@@ -265,7 +267,9 @@ def speak(text):
     formatted_text = format_command_for_speech(english_text)
     
     def _speak():
+        global tts_speaking
         with tts_lock:
+            tts_speaking = True  # Set flag to prevent audio capture
             engine = init_tts()
             if engine is not None:
                 try:
@@ -273,6 +277,7 @@ def speak(text):
                     engine.runAndWait()
                 except Exception as e:
                     print("TTS Error: {}".format(e))
+            tts_speaking = False  # Clear flag when done speaking
 
     # Run TTS in a separate thread to avoid blocking
     thread = threading.Thread(target=_speak)
@@ -640,7 +645,7 @@ async def receive_events_loop(websocket):
                 # Handle different event types
                 if event_type == "input_audio_buffer.speech_started":
                     safe_print("🎤 Speech started")
-                    speak("Listening")
+                    # Don't speak "Listening" - it causes feedback loop with audio capture
                 
                 elif event_type == "input_audio_buffer.speech_stopped":
                     safe_print("✓ Speech stopped")
@@ -692,10 +697,36 @@ async def process_transcripts_loop():
             )
             
             if transcript:
+                # Clean and validate transcript before processing
+                transcript = transcript.strip()
+                
+                # Ignore common non-command words that might be mis-transcribed
+                ignore_words = ['listening', 'processing', 'sabien', 'sabiendo', 
+                               'listening.', 'processing.', 'ok', 'okay', 'yes', 'no']
+                if transcript.lower() in ignore_words or len(transcript) < 3:
+                    safe_print("\n⚠️  Ignoring non-command: {}".format(transcript))
+                    # Wait longer before next listen to avoid feedback
+                    await asyncio.sleep(2.0)
+                    continue
+                
+                # Quick validation - check if it looks like a movement command
+                movement_keywords = ['move', 'go', 'turn', 'rotate', 'advance', 'retreat', 
+                                    'forward', 'backward', 'left', 'right', 'stop',
+                                    'avanza', 'retrocede', 'gira', 'adelante', 'atrás']
+                has_movement_keyword = any(keyword in transcript.lower() for keyword in movement_keywords)
+                
+                if not has_movement_keyword:
+                    safe_print("\n⚠️  Transcript doesn't appear to be a movement command: {}".format(transcript))
+                    safe_print("   Ignoring. Please speak a movement command.")
+                    # Wait before next listen
+                    await asyncio.sleep(2.0)
+                    continue
+                
                 # Announce recognized command
                 safe_print("\n✓ Recognized: {}".format(transcript))
                 speak("I heard: {}".format(transcript))
-                await asyncio.sleep(0.5)
+                # Wait for TTS to finish before processing
+                await asyncio.sleep(2.0)  # Longer wait to ensure TTS finishes
                 
                 # Process command in a thread to avoid blocking
                 def process_command():
