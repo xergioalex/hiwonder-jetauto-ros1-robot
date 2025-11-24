@@ -749,6 +749,9 @@ async def process_transcripts_loop():
                 print("-" * 70)
                 print("")
                 
+                # Longer delay after processing to avoid feedback
+                await asyncio.sleep(2.0)  # Wait for any TTS to finish completely
+                
         except asyncio.TimeoutError:
             # No transcript received, continue waiting
             continue
@@ -909,7 +912,7 @@ if __name__ == "__main__":
     greeting = "Realtime voice recognition ready. Listening for commands."
     print(greeting)
     speak(greeting)
-    time.sleep(1.5)  # Wait for greeting to finish speaking
+    time.sleep(3.0)  # Wait longer for greeting to finish (prevents immediate feedback)
     print("")
 
     try:
