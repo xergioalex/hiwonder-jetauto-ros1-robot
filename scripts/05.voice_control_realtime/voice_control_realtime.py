@@ -42,7 +42,7 @@ def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
     global should_exit
     print("\n\nCtrl+C detected - Stopping controller...")
-    speak("Deteniendo")
+    speak("Stopping")
     print("Goodbye!")
     should_exit = True
     sys.exit(0)
@@ -708,7 +708,7 @@ async def process_transcripts_loop():
                         execute_sequence(steps)
                     except (KeyboardInterrupt, rospy.ROSInterruptException):
                         print("\n\nInterrupted during execution - Stopping...")
-                        speak("Deteniendo")
+                        speak("Stopping")
                 
                 # Run in thread pool to avoid blocking async loop
                 loop = asyncio.get_event_loop()
@@ -886,7 +886,7 @@ if __name__ == "__main__":
         run_async_main()
     except KeyboardInterrupt:
         print("\n\nCtrl+C detected - Stopping controller...")
-        speak("Deteniendo")
+        speak("Stopping")
         print("Goodbye!")
     except Exception as e:
         print("\nError: {}".format(e))

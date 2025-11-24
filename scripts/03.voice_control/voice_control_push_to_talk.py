@@ -43,7 +43,7 @@ def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
     global should_exit
     print("\n\nCtrl+C detected - Stopping controller...")
-    speak("Deteniendo")
+    speak("Stopping")
     print("Goodbye!")
     should_exit = True
     sys.exit(0)
@@ -764,13 +764,13 @@ if __name__ == "__main__":
                 user_input = input("Enter command (or press ENTER for voice): ").strip()
             except (KeyboardInterrupt, EOFError):
                 print("\n\nInterrupted - Exiting...")
-                speak("Deteniendo")
+                speak("Stopping")
                 break
 
             # Check for exit commands
             if user_input.lower() in ['exit', 'quit', 'salir', 'terminar', 'cerrar']:
                 print("\nExiting robot controller...")
-                speak("Adios")
+                speak("Goodbye")
                 break
 
             # If empty input and audio is available, use voice input
@@ -799,7 +799,7 @@ if __name__ == "__main__":
                             execute_sequence(steps)
                         except (KeyboardInterrupt, rospy.ROSInterruptException):
                             print("\n\nInterrupted during execution - Stopping...")
-                            speak("Deteniendo")
+                            speak("Stopping")
                             break
 
                         print("\nSequence completed!")
@@ -829,7 +829,7 @@ if __name__ == "__main__":
                 execute_sequence(steps)
             except (KeyboardInterrupt, rospy.ROSInterruptException):
                 print("\n\nInterrupted during execution - Stopping...")
-                speak("Deteniendo")
+                speak("Stopping")
                 break
 
             print("\nSequence completed!")
@@ -838,7 +838,7 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print("\n\nCtrl+C detected - Stopping controller...")
-        speak("Deteniendo")
+        speak("Stopping")
         print("Goodbye!")
     except Exception as e:
         print("\nError: {}".format(e))
