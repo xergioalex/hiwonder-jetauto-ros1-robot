@@ -431,34 +431,26 @@ def ask_llm_for_twist(command, system_prompt):
         }
 
 def execute_sequence(commands):
-    rospy.init_node('llm_multi_command_controller')
+    # Initialize ROS node only if not already initialized
+    try:
+        rospy.init_node('llm_multi_command_controller', anonymous=True)
+    except rospy.ROSException:
+        # Node already initialized, continue
+        pass
+    
     pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
     rate = rospy.Rate(10)  # 10Hz for smoother control
     system_prompt = load_system_prompt()
 
     for cmd in commands:
+        if rospy.is_shutdown():
+            print("ROS shutdown detected, stopping execution")
+            break
+            
         safe_print("Executing: {}".format(cmd))
         
         # Validate command before executing
-        validation = validate_command(cmd)
-        if not validation.get("valid", True):
-            message = validation.get("message", "I didn't understand that command. Please provide a movement instruction.")
-            safe_print("\n⚠️  {}".format(message))
-            # Announce error via TTS
-            speak("I didn't understand that command. Please provide a movement instruction.")
-            print("")  # Empty line for readability
-            continue  # Skip this command and move to next
-        
-        # Announce the command via TTS
-        speak(cmd)
-
-        twist_data = ask_llm_for_twist(cmd, system_prompt)
-        
-        # Check if the command resulted in zero movement (might be invalid)
-        if (twist_data['linear']['x'] == 0 and twist_data['angular']['z'] == 0 and 
-            twist_data.get('metadata', {}).get('duration_seconds', 0) <= 0.1):
-            # This might be an invalid command that was converted to stop
-            # Double-check with validation
+        try:
             validation = validate_command(cmd)
             if not validation.get("valid", True):
                 message = validation.get("message", "I didn't understand that command. Please provide a movement instruction.")
@@ -466,6 +458,38 @@ def execute_sequence(commands):
                 # Announce error via TTS
                 speak("I didn't understand that command. Please provide a movement instruction.")
                 print("")  # Empty line for readability
+                continue  # Skip this command and move to next
+        except Exception as e:
+            print("Error validating command: {}".format(e))
+            continue
+        
+        # Announce the command via TTS
+        speak(cmd)
+
+        try:
+            twist_data = ask_llm_for_twist(cmd, system_prompt)
+        except Exception as e:
+            print("Error getting twist data: {}".format(e))
+            import traceback
+            traceback.print_exc()
+            continue
+        
+        # Check if the command resulted in zero movement (might be invalid)
+        if (twist_data['linear']['x'] == 0 and twist_data['angular']['z'] == 0 and 
+            twist_data.get('metadata', {}).get('duration_seconds', 0) <= 0.1):
+            # This might be an invalid command that was converted to stop
+            # Double-check with validation
+            try:
+                validation = validate_command(cmd)
+                if not validation.get("valid", True):
+                    message = validation.get("message", "I didn't understand that command. Please provide a movement instruction.")
+                    safe_print("\n⚠️  {}".format(message))
+                    # Announce error via TTS
+                    speak("I didn't understand that command. Please provide a movement instruction.")
+                    print("")  # Empty line for readability
+                    continue
+            except Exception as e:
+                print("Error in validation: {}".format(e))
                 continue
 
         # Extract metadata
@@ -493,14 +517,24 @@ def execute_sequence(commands):
         twist.angular.z = twist_data['angular']['z']
 
         # Execute for the specified duration
-        start_time = time.time()
-        while (time.time() - start_time) < duration:
-            pub.publish(twist)
-            rate.sleep()
+        try:
+            start_time = time.time()
+            while (time.time() - start_time) < duration:
+                if rospy.is_shutdown():
+                    break
+                pub.publish(twist)
+                rate.sleep()
+        except Exception as e:
+            print("Error during execution: {}".format(e))
+            import traceback
+            traceback.print_exc()
 
         # Stop after each step
-        pub.publish(Twist())
-        # time.sleep(0.1)  # Optional pause between commands (commented for instant transitions)
+        try:
+            pub.publish(Twist())
+            time.sleep(0.2)  # Brief pause between commands for safety
+        except Exception as e:
+            print("Error stopping robot: {}".format(e))
 
 if __name__ == "__main__":
     # Register signal handler for Ctrl+C
