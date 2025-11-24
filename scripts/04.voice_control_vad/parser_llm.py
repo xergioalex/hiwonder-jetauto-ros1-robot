@@ -1,5 +1,6 @@
 import requests
 import os
+import json
 from dotenv import load_dotenv
 
 # Load environment variables from .env file in repo root
@@ -14,13 +15,39 @@ OPENAI_MODEL_UTILITY = "gpt-5-mini"   # for translation / parsing of steps
 def extract_text_from_responses(result):
     """
     Extract the main text from a Responses API response.
-    Expects the standard format:
-      result["output"][0]["content"][0]["text"]
+    Tries multiple possible response formats:
+      - result["output"][0]["content"][0]["text"]
+      - result["output"][0]["text"]
+      - result["output"][0]
+      - result["text"]
     """
     try:
-        return result["output"][0]["content"][0]["text"]
+        # Try standard format first
+        if "output" in result and len(result["output"]) > 0:
+            output_item = result["output"][0]
+            # Check if it has "content" array
+            if "content" in output_item and len(output_item["content"]) > 0:
+                content_item = output_item["content"][0]
+                if "text" in content_item:
+                    return content_item["text"]
+                # If content item is directly a string
+                if isinstance(content_item, str):
+                    return content_item
+            # Check if output item has "text" directly
+            if "text" in output_item:
+                return output_item["text"]
+            # If output item is directly a string
+            if isinstance(output_item, str):
+                return output_item
+        # Try direct "text" field
+        if "text" in result:
+            return result["text"]
+        # Debug: print the actual structure
+        print("Debug: Unexpected response structure: {}".format(json.dumps(result, indent=2)[:500]))
+        return None
     except (KeyError, IndexError, TypeError) as e:
         print("Error extracting text from Responses API result: {}".format(e))
+        print("Debug: Response structure: {}".format(str(result)[:500]))
         return None
 
 def load_prompt():

@@ -80,13 +80,39 @@ VAD_MAX_DURATION_SEC = 10  # Maximum recording duration (safety limit)
 def extract_text_from_responses(result):
     """
     Extract the main text from a Responses API response.
-    Expects the standard format:
-      result["output"][0]["content"][0]["text"]
+    Tries multiple possible response formats:
+      - result["output"][0]["content"][0]["text"]
+      - result["output"][0]["text"]
+      - result["output"][0]
+      - result["text"]
     """
     try:
-        return result["output"][0]["content"][0]["text"]
+        # Try standard format first
+        if "output" in result and len(result["output"]) > 0:
+            output_item = result["output"][0]
+            # Check if it has "content" array
+            if "content" in output_item and len(output_item["content"]) > 0:
+                content_item = output_item["content"][0]
+                if "text" in content_item:
+                    return content_item["text"]
+                # If content item is directly a string
+                if isinstance(content_item, str):
+                    return content_item
+            # Check if output item has "text" directly
+            if "text" in output_item:
+                return output_item["text"]
+            # If output item is directly a string
+            if isinstance(output_item, str):
+                return output_item
+        # Try direct "text" field
+        if "text" in result:
+            return result["text"]
+        # Debug: print the actual structure
+        print("Debug: Unexpected response structure: {}".format(json.dumps(result, indent=2)[:500]))
+        return None
     except (KeyError, IndexError, TypeError) as e:
         print("Error extracting text from Responses API result: {}".format(e))
+        print("Debug: Response structure: {}".format(str(result)[:500]))
         return None
 
 def safe_print(message):
@@ -194,13 +220,51 @@ Command: {}""".format(command)
     
     return formatted
 
+def translate_to_english_for_speech(text):
+    """Translate text to English for TTS announcements"""
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        return text  # Return original if no API key
+    
+    url = OPENAI_API_BASE_URL
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(api_key)
+    }
+    
+    data = {
+        "model": OPENAI_MODEL_UTILITY,
+        "instructions": (
+            "You are a translator. Translate the given text to English. "
+            "If the text is already in English, return it unchanged. "
+            "Only return the translated text, no explanations, no additional text."
+        ),
+        "input": text,
+        "temperature": 0.3
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            translated = extract_text_from_responses(result)
+            if translated:
+                return translated.strip()
+    except:
+        pass  # If translation fails, return original
+    
+    return text  # Return original if translation fails
+
 def speak(text):
-    """Speak the given text using TTS (non-blocking)"""
+    """Speak the given text using TTS (non-blocking). Always translates to English first."""
     if not TTS_AVAILABLE:
         return  # TTS not available, skip voice announcement
     
+    # Always translate to English first
+    english_text = translate_to_english_for_speech(text)
+    
     # Format command for clearer speech
-    formatted_text = format_command_for_speech(text)
+    formatted_text = format_command_for_speech(english_text)
     
     def _speak():
         with tts_lock:
