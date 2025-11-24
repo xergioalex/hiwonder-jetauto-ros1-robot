@@ -6,6 +6,23 @@ from dotenv import load_dotenv
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 load_dotenv(os.path.join(repo_root, '.env'))
 
+# OpenAI Responses API constants
+OPENAI_API_BASE_URL = "https://api.openai.com/v1/responses"
+OPENAI_MODEL_MOVEMENT = "gpt-5-mini"  # for movement commands
+OPENAI_MODEL_UTILITY = "gpt-5-mini"   # for translation / parsing of steps
+
+def extract_text_from_responses(result):
+    """
+    Extract the main text from a Responses API response.
+    Expects the standard format:
+      result["output"][0]["content"][0]["text"]
+    """
+    try:
+        return result["output"][0]["content"][0]["text"]
+    except (KeyError, IndexError, TypeError) as e:
+        print("Error extracting text from Responses API result: {}".format(e))
+        return None
+
 def load_prompt():
     with open(os.path.join(os.path.dirname(__file__), "prompts", "multi_step_parser.txt"), "r", encoding='utf-8') as f:
         return f.read()
@@ -35,17 +52,19 @@ def translate_to_english(text):
     if has_english and len([w for w in text_lower.split() if w in english_indicators]) >= 2:
         return text  # Likely already in English
     
-    url = "https://api.openai.com/v1/chat/completions"
+    url = OPENAI_API_BASE_URL
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(api_key)
     }
     data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": "You are a translator. Translate robot movement commands from any language to English. Keep the meaning and structure exactly the same. Only return the translated text, no explanations, no additional text."},
-            {"role": "user", "content": text}
-        ],
+        "model": OPENAI_MODEL_UTILITY,
+        "instructions": (
+            "You are a translator. Translate robot movement commands from any "
+            "language to English. Keep the meaning and structure exactly the same. "
+            "Only return the translated text, no explanations, no additional text."
+        ),
+        "input": text,
         "temperature": 0.3
     }
     
@@ -53,8 +72,9 @@ def translate_to_english(text):
         response = requests.post(url, headers=headers, json=data, timeout=15)
         if response.status_code == 200:
             result = response.json()
-            if 'choices' in result and len(result['choices']) > 0:
-                translated = result['choices'][0]['message']['content'].strip()
+            translated = extract_text_from_responses(result)
+            if translated:
+                translated = translated.strip()
                 safe_print("Debug: Translated to English: {}".format(translated))
                 return translated
     except:
@@ -89,19 +109,17 @@ def split_into_steps(text):
     else:
         print("Debug: API key format looks correct (starts with sk-)")
     print("Debug: API key length: {} characters".format(len(api_key)))
-    print("Debug: Making request to OpenAI API...")
+    print("Debug: Making request to OpenAI Responses API...")
     
-    url = "https://api.openai.com/v1/chat/completions"
+    url = OPENAI_API_BASE_URL
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(api_key)
     }
     data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": english_text}
-        ]
+        "model": OPENAI_MODEL_UTILITY,
+        "instructions": system_prompt,
+        "input": english_text,
     }
     
     try:
@@ -134,11 +152,11 @@ def split_into_steps(text):
         result = response.json()
         print("Debug: Response received successfully")
         
-        if 'choices' not in result or len(result['choices']) == 0:
-            print("Error: No choices in API response")
+        content = extract_text_from_responses(result)
+        if not content:
+            print("Error: Empty content from Responses API")
             return []
         
-        content = result['choices'][0]['message']['content']
         safe_print("API Response: {}".format(content))
         
         steps = []

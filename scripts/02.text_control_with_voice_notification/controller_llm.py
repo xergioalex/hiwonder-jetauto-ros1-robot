@@ -37,6 +37,23 @@ def signal_handler(sig, frame):
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 load_dotenv(os.path.join(repo_root, '.env'))
 
+# OpenAI Responses API constants
+OPENAI_API_BASE_URL = "https://api.openai.com/v1/responses"
+OPENAI_MODEL_MOVEMENT = "gpt-5-mini"  # for movement commands
+OPENAI_MODEL_UTILITY = "gpt-5-mini"   # for translation / parsing of steps
+
+def extract_text_from_responses(result):
+    """
+    Extract the main text from a Responses API response.
+    Expects the standard format:
+      result["output"][0]["content"][0]["text"]
+    """
+    try:
+        return result["output"][0]["content"][0]["text"]
+    except (KeyError, IndexError, TypeError) as e:
+        print("Error extracting text from Responses API result: {}".format(e))
+        return None
+
 def safe_print(message):
     """Print message safely, handling Unicode encoding errors"""
     try:
@@ -73,7 +90,7 @@ def format_command_for_speech(command):
     if not api_key:
         return command  # Return original if no API key
     
-    url = "https://api.openai.com/v1/chat/completions"
+    url = OPENAI_API_BASE_URL
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(api_key)
@@ -95,21 +112,19 @@ Examples:
 Command: {}""".format(command)
     
     data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": "You are a text formatter for robot voice announcements. Convert commands to clear, natural speech."},
-            {"role": "user", "content": prompt}
-        ],
+        "model": OPENAI_MODEL_UTILITY,
+        "instructions": "You are a text formatter for robot voice announcements. Convert commands to clear, natural speech.",
+        "input": prompt,
         "temperature": 0.3,
-        "max_tokens": 50
     }
     
     try:
         response = requests.post(url, headers=headers, json=data, timeout=10)
         if response.status_code == 200:
             result = response.json()
-            if 'choices' in result and len(result['choices']) > 0:
-                formatted = result['choices'][0]['message']['content'].strip()
+            formatted = extract_text_from_responses(result)
+            if formatted:
+                formatted = formatted.strip()
                 # Remove quotes if present
                 formatted = formatted.strip('"').strip("'")
                 return formatted
@@ -179,7 +194,7 @@ def validate_command(command):
     if not api_key:
         return {"valid": True, "message": None}  # Skip validation if no API key
     
-    url = "https://api.openai.com/v1/chat/completions"
+    url = OPENAI_API_BASE_URL
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(api_key)
@@ -196,29 +211,28 @@ If the command IS a valid movement command, respond with JSON:
 Command: {}""".format(command)
     
     data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": "You are a validator for robot movement commands. Respond ONLY with valid JSON, no additional text."},
-            {"role": "user", "content": prompt}
-        ],
+        "model": OPENAI_MODEL_MOVEMENT,
+        "instructions": "You are a validator for robot movement commands. Respond ONLY with valid JSON, no additional text.",
+        "input": prompt,
         "temperature": 0.3,
-        "max_tokens": 150
     }
     
     try:
         response = requests.post(url, headers=headers, json=data, timeout=10)
         if response.status_code == 200:
             result = response.json()
-            if 'choices' in result and len(result['choices']) > 0:
-                content = result['choices'][0]['message']['content'].strip()
-                # Remove markdown code blocks if present
-                if content.startswith('```'):
-                    content = content.split('```')[1]
-                    if content.startswith('json'):
-                        content = content[4:]
-                content = content.strip()
-                validation_result = json.loads(content)
-                return validation_result
+            content = extract_text_from_responses(result)
+            if not content:
+                return {"valid": True, "message": None}
+            content = content.strip()
+            # Remove markdown code blocks if present
+            if content.startswith('```'):
+                content = content.split('```')[1]
+                if content.startswith('json'):
+                    content = content[4:]
+            content = content.strip()
+            validation_result = json.loads(content)
+            return validation_result
     except:
         pass  # If validation fails, assume valid and proceed
     
@@ -238,17 +252,15 @@ def ask_llm_for_twist(command, system_prompt):
     if not api_key.startswith('sk-'):
         print("Warning: API key doesn't start with 'sk-', might be invalid")
     
-    url = "https://api.openai.com/v1/chat/completions"
+    url = OPENAI_API_BASE_URL
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(api_key)
     }
     data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": command}
-        ]
+        "model": OPENAI_MODEL_MOVEMENT,
+        "instructions": system_prompt,
+        "input": command,
     }
     
     try:
@@ -290,15 +302,20 @@ def ask_llm_for_twist(command, system_prompt):
         response.raise_for_status()
         result = response.json()
         
-        if 'choices' not in result or len(result['choices']) == 0:
-            print("Error: No choices in API response")
-            return {
-                "linear": {"x": 0, "y": 0, "z": 0},
-                "angular": {"x": 0, "y": 0, "z": 0},
-                "metadata": {"distance_meters": None, "angle_degrees": None, "duration_seconds": 2.0}
-            }
+        content = extract_text_from_responses(result)
+        if not content:
+            raise ValueError("Empty content from Responses API")
         
-        content = result['choices'][0]['message']['content']
+        content = content.strip()
+        
+        # If the model wraps in ```json, reuse the cleanup logic
+        if content.startswith('```'):
+            parts = content.split('```')
+            if len(parts) >= 2:
+                content = parts[1].strip()
+                if content.startswith('json'):
+                    content = content[4:].strip()
+        
         return json.loads(content)
     except requests.exceptions.RequestException as e:
         print("Error making API request: {}".format(e))
@@ -317,7 +334,11 @@ def ask_llm_for_twist(command, system_prompt):
     except (KeyError, ValueError) as e:
         print("Error parsing API response: {}".format(e))
         if 'result' in locals():
-            print("Response content: {}".format(result.get('choices', [{}])[0].get('message', {}).get('content', 'N/A')))
+            try:
+                content = extract_text_from_responses(result)
+                print("Response content: {}".format(content if content else 'N/A'))
+            except:
+                print("Response content: N/A")
         return {
             "linear": {"x": 0, "y": 0, "z": 0},
             "angular": {"x": 0, "y": 0, "z": 0},
