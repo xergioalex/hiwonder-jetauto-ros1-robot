@@ -18,30 +18,42 @@ def extract_text_from_responses(result):
     Tries multiple possible response formats:
       - result["output"][0]["content"][0]["text"]
       - result["output"][0]["text"]
-      - result["output"][0]
+      - result["output"][1] (if output[0] is metadata)
+      - result["output"][0] (if it's a string)
       - result["text"]
     """
     try:
         # Try standard format first
         if "output" in result and len(result["output"]) > 0:
-            output_item = result["output"][0]
-            # Check if it has "content" array
-            if "content" in output_item and len(output_item["content"]) > 0:
-                content_item = output_item["content"][0]
-                if "text" in content_item:
-                    return content_item["text"]
-                # If content item is directly a string
-                if isinstance(content_item, str):
-                    return content_item
-            # Check if output item has "text" directly
-            if "text" in output_item:
-                return output_item["text"]
-            # If output item is directly a string
-            if isinstance(output_item, str):
-                return output_item
+            # Check all items in output array
+            for output_item in result["output"]:
+                # Skip metadata dicts (they have keys like 'format', 'verbosity', etc.)
+                if isinstance(output_item, dict):
+                    # Check if it has "content" array
+                    if "content" in output_item and len(output_item["content"]) > 0:
+                        content_item = output_item["content"][0]
+                        if "text" in content_item:
+                            return content_item["text"]
+                        # If content item is directly a string
+                        if isinstance(content_item, str):
+                            return content_item
+                    # Check if output item has "text" directly (and is not metadata)
+                    if "text" in output_item and "format" not in output_item:
+                        return output_item["text"]
+                # If output item is directly a string
+                elif isinstance(output_item, str):
+                    return output_item
         # Try direct "text" field
         if "text" in result:
-            return result["text"]
+            text_value = result["text"]
+            # If text is a string, return it
+            if isinstance(text_value, str):
+                return text_value
+            # If text is a dict, try to extract from it
+            if isinstance(text_value, dict):
+                if "content" in text_value:
+                    return str(text_value["content"])
+                return str(text_value)
         # Debug: print the actual structure
         print("Debug: Unexpected response structure: {}".format(json.dumps(result, indent=2)[:500]))
         return None
@@ -192,6 +204,10 @@ def split_into_steps(text):
             print("Error: Empty content from Responses API")
             print("Debug: Full response structure: {}".format(json.dumps(result, indent=2)[:1000]))
             return []
+        
+        # Ensure content is a string
+        if not isinstance(content, str):
+            content = str(content)
         
         safe_print("API Response: {}".format(content))
         
