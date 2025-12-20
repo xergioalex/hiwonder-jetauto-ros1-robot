@@ -211,3 +211,5 @@ Once this test works, you can:
 - The script automatically stops the robot if interrupted (Ctrl+C)
 - All movement commands are sent at 10Hz for smooth control
 
+
+
